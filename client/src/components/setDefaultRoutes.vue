@@ -63,7 +63,7 @@
                 <div class="col-md-6" @click="deletePlan(pIndex)">
                   <icon name="trash" scale="1.4"></icon>
                 </div>
-                <div class="col-md-6" v-if="currentOpen == pIndex" @click="expand(pIndex)">
+                <div class="col-md-6" v-if="checkOpen(pIndex)" @click="expand(pIndex)">
                   <icon name="arrow-up" scale="1.4"></icon>
                 </div>
                 <div class="col-md-6" v-else @click="expand(pIndex)">
@@ -75,7 +75,7 @@
         </div>
       </div>
       <div :id="'plan_'+pIndex" class="outer-toggle">
-        <div v-for="(service, sIndex) in plan.services">
+        <div v-for="(service, sIndex) in plan.services" v-if="checkAnyRouteAvailable(service.routes)">
           <div class="container outer-main">
             <div class="row">
               <div class="col-md-12 service-header">
@@ -86,33 +86,39 @@
                 </div>
               </div>
             </div>
-            <div v-for="(route, rIndex) in service.routes">
+            <div class="internal" v-for="(route, rIndex) in service.routes" v-if="checkAnyMethodAvailable(route.methods)">
               <div class="row">
-                <div class="col-md-12 route-header">
-                  <div class="row">
-                    <div class="col-md-12">
-                      <h4>Route: {{route.name}}</h4>
-                    </div>
-                  </div>
-                </div>
+                <table>
+                  <tbody>
+                    <tr>
+                      <td class="col-md-3" rowspan="2">
+                        <h4>Route: {{route.name}}</h4>
+                      </td>
+                      <td class="col-md-9 internal2">
+                        <div v-for="(method, mIndex) in route.methods" v-if="method.active">
+                          <div class="row">
+                            <div class="col-md-3 method-name">
+                              {{method.name}}
+                            </div>
+                            <div class="col-md-7">
+                              {{method.description}}
+                            </div>
+                            <div class="col-md-2">
+                              <input type="text" class="input-default-value" name="value" v-model="method.value" min=0 :id="service.name + '_' + route.name + '_' + method.name" placeholder="enter value"></input>
+                            </div>
+                          </div>
+                          <template v-if="mIndex < route.methods.length - 1">
+                            <hr class="internal">
+                          </template>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
-              <div v-for="(method, mIndex) in route.methods">
-                <div class="row method">
-                  <div class="col-md-4 method-name">
-                    {{method.name}}
-                  </div>
-                  <div class="col-md-8">
-                    <div class="row">
-                      <div class="col-md-9">
-                        {{method.description}}
-                      </div>
-                      <div class="col-md-3">
-                        <input type="text" class="input-default-value" name="value" v-model="method.value" min=0 :id="service.name + '_' + route.name + '_' + method.name" placeholder="enter value"></input>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <template v-if="rIndex != service.routes.length - 1">
+                <hr class="internal">
+              </template>
             </div>
           </div>
         </div>
@@ -151,7 +157,7 @@ export default {
     return {
       services: [],
       plans: [],
-      currentOpen: -1,
+      currentOpen: [],
       time_units: ['day/s', 'month/s', 'year/s']
     }
   },
@@ -167,6 +173,22 @@ export default {
     })
   },
   methods: {
+    checkOpen (index) {
+      // if (_.intersection(this.currentOpen,[index]).length > 0)) return true
+      return false
+    },
+    checkAnyMethodAvailable (methods) {
+      for (let i=0; i<methods.length; i++) {
+        if (methods[i].active) return true
+      }
+      return false
+    },
+    checkAnyRouteAvailable (routes) {
+      for (let i=0; i<routes.length; i++) {
+        if (this.checkAnyMethodAvailable(routes[i].methods)) return true
+      }
+      return false
+    },
     createPlan () {
       let services = []
       axios.get(baseUrl+"/secure-routes").
@@ -186,15 +208,15 @@ export default {
     },
     expand (plan) {
       $('#plan_'+plan).slideToggle(700)
-      if (this.currentOpen == plan) {
-        this.currentOpen = -1
-      }
-      else {
-        if (this.currentOpen != -1) {
-          $('#plan_'+this.currentOpen).slideToggle(450)
-        }
-        this.currentOpen = plan
-      }
+      // if (this.currentOpen == plan) {
+      //   this.currentOpen = -1
+      // }
+      // else {
+      //   // if (this.currentOpen != -1) {
+      //   //   $('#plan_'+this.currentOpen).slideToggle(450)
+      //   // }
+      //   this.currentOpen = plan
+      // }
     },
     update () {
       axios.delete(baseUrl+"/default-subscription").
@@ -311,5 +333,23 @@ export default {
   hr {
     border-width: 2px;
     border-color: #888888;
+  }
+
+  hr.internal {
+    border-width: 2px;
+    margin: 5px;
+    border-color: #888888;
+  }
+
+  div.internal {
+    margin: 5px;
+  }
+
+  table {
+    width: 100%
+  }
+
+  .internal2 {
+    border-left: dashed 1px grey;
   }
 </style>
