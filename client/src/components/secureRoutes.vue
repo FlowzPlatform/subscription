@@ -34,43 +34,46 @@
             </div>
           </div>
         </div>
-        <div v-for="(route, rIndex) in service.routes">
+        <div class="internal" v-for="(route, rIndex) in service.routes">
           <div class="row">
-            <div class="col-md-12 route-header">
-              <div class="row">
-                <div class="col-md-10">
-                  <h4>Route: <input type="text" v-model="route.name" placeholder="enter route"></h4>
-                </div>
-                <div class="col-md-2 pull-right options">
-                  <div class="row">
-                    <div class="col-md-9">
-                      <h5 @click="addMethod(sIndex, rIndex)"> add method</h5>
+            <table>
+              <tbody>
+                <tr>
+                  <td class="col-md-3" rowspan="5">
+                    <div class="row">
+                      <h4>Route: <input type="text" class="i-width" v-model="route.name" placeholder="enter route"></h4>
                     </div>
-                    <div class="col-md-3 delete-route-option" @click="deleteRoute(sIndex, rIndex)">
+                  </td>
+                  <td class="col-md-8 internal2">
+                    <div v-for="(method, mIndex) in route.methods">
+                      <div class="row">
+                        <div class="col-md-2 method-name">
+                          {{method.name}}
+                        </div>
+                        <div class="col-md-9">
+                          <input class="description" type="text" v-model="method.description" placeholder="add description for method" align="center">
+                        </div>
+                        <div class="col-md-1">
+                          <input class="description" type="checkbox" v-model="method.active">
+                        </div>
+                      </div>
+                      <template v-if="mIndex < route.methods.length - 1">
+                        <hr class="internal">
+                      </template>
+                    </div>
+                  </td>
+                  <td class="col-md-1 internal2">
+                    <div class="col-md-12" @click="deleteRoute(sIndex, rIndex)">
                       <icon name="trash" scale="1.1"></icon>
                     </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
-          <div v-for="(method, mIndex) in route.methods">
-            <div class="row method">
-              <div class="col-md-4 method-name">
-                <input type="text" v-model="method.name" placeholder="method name">
-              </div>
-              <div class="col-md-8">
-                <div class="row">
-                  <div class="col-md-11">
-                    <input class="description" type="text" v-model="method.description" placeholder="add description for method">
-                  </div>
-                  <div class="col-md-1 delete" @click="deleteMethod(sIndex, rIndex, mIndex)">
-                    <icon name="trash" scale="0.8"></icon>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          <template v-if="rIndex != service.routes.length - 1">
+            <hr class="internal">
+          </template>
         </div>
       </div>
     </div>
@@ -114,15 +117,15 @@ export default {
     })
   },
   methods: {
-    addMethod (service, route) {
-      this.services[service].routes[route].methods.push({name:"",description:""})
-    },
+    // addMethod (service, route) {
+    //   this.services[service].routes[route].methods.push({name:"",description:""})
+    // },
     addRoute (service) {
-      this.services[service].routes.push({name:"",methods:[]})
+      this.services[service].routes.push({name:"",methods:[{name:"get",description:""},{name:"post",description:""},{name:"patch",description:""},{name:"put",description:""},{name:"delete",description:""}]})
     },
-    deleteMethod(service, route, method) {
-      this.services[service].routes[route].methods.splice(method, 1)
-    },
+    // deleteMethod(service, route, method) {
+    //   this.services[service].routes[route].methods.splice(method, 1)
+    // },
     deleteRoute(service, route) {
       this.services[service].routes.splice(route, 1)
     },
@@ -235,5 +238,27 @@ export default {
   hr {
     border-width: 2px;
     border-color: #888888;
+  }
+
+  .i-width {
+    width: 44%;
+  }
+
+  hr.internal {
+    border-width: 2px;
+    margin: 5px;
+    border-color: #888888;
+  }
+
+  div.internal {
+    margin: 5px;
+  }
+
+  table {
+    width: 100%
+  }
+
+  .internal2 {
+    border-left: dashed 1px grey;
   }
 </style>
