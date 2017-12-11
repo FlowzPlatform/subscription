@@ -1,26 +1,3 @@
-//
-// let defaultPlan = [
-//   {
-//     route: '/website',
-//     method: 'post',
-//     no: 5
-//   },
-//   {
-//     route: '/message',
-//     method: 'create',
-//     value: 20
-//   },
-//   {
-//     route: '/message',
-//     method: 'get',
-//     value: 15
-//   },
-//   {
-//     route: '/website',
-//     method: 'get',
-//     value: 10
-//   }
-// ]
 let rp = require('request-promise')
 let defaultConfig = {
   'subscriptionURL': '/subscription_page',
@@ -48,15 +25,29 @@ let secureService = {
 module.exports.secureService = secureService
 
 module.exports.subscription = async function (req, res, next) {
-  //console.log('Subscription Request:', req.headers.authorization)
+  // console.log('Subscription Request:', req.headers.authorization)
   console.log('==1=>' + (req.baseUrl + req._parsedUrl.pathname) + '<==')
   if (req.headers.authorization !== undefined) {
-    let userDetail = await getUserPackage(req.headers.authorization).catch((err) => { if (err) {} })
+    let userDetail = await getUserPackage(req.headers.authorization)
+                            .catch((err) => {
+                              // on error from user authontication
+                              if (err) {
+                                res.redirect(401, subscriptionURL)
+                                return false
+                              }
+                            })
+    // no user detail found then redirect to login page
+    if (userDetail.data.package !== undefined && userDetail.data.package.details !== undefined) {
+      console.log('planExpire===>')
+      res.redirect(401, subscriptionURL)
+      return false
+    }
+
     // console.log('==userDetail=>', userDetail.data)
     if (userDetail.data.package !== undefined && userDetail.data.package.details !== undefined) {
       if (isPlanExpired(userDetail.data.package.expiredOn)) {
         console.log('planExpire===>')
-        res.redirect(401, subscriptionURL)
+        res.redirect(403, subscriptionURL)
         return false
       }
 
@@ -69,21 +60,21 @@ module.exports.subscription = async function (req, res, next) {
       let findObj = userPlan.find((o) => { return regExpmainRoute.test(o.route) && regExpmainMethod.test(o.method) })
       if (findObj !== undefined) {
         // call validate method
-        //console.log('====== Find Obj :', findObj)
+        // console.log('====== Find Obj :', findObj)
         try {
           console.log(secureService.validate.toString())
           if (typeof secureService.validate === 'function') {
             let isSecure = await secureService.validate(mainRoute, req, findObj)
             if (isSecure !== true) {
-              res.redirect(401, subscriptionURL)
+              res.redirect(403, subscriptionURL)
               return false
             }
           } else {
-            res.redirect(401, subscriptionURL)
+            res.redirect(403, subscriptionURL)
             return false
           }
         } catch (e) {
-          res.redirect(401, subscriptionURL)
+          res.redirect(403, subscriptionURL)
           return false
         }
       }
