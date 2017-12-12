@@ -144,9 +144,10 @@ Vue.use(BootstrapVue);
 import 'bootstrap/dist/css/bootstrap.css'
 import 'bootstrap-vue/dist/bootstrap-vue.css'
 import _ from 'lodash'
-import axios from "axios";
 // let baseUrl = process.env.baseUrl;
-let baseUrl = 'http://172.16.230.253:3030'
+import defaultSubscription from '@/api/default-subscription'
+import secureRoutes from '@/api/secure-routes'
+
 import 'vue-awesome/icons'
 import $ from 'jquery'
 Vue.component('icon', Icon)
@@ -162,7 +163,7 @@ export default {
     }
   },
   created()  {
-    axios.get(baseUrl+"/default-subscription").
+    defaultSubscription.get().
     then((response) => {
       if (response.data.data.length > 0) {
         this.planExists = true
@@ -191,7 +192,7 @@ export default {
     },
     createPlan () {
       let services = []
-      axios.get(baseUrl+"/secure-routes").
+      secureRoutes.get().
       then((response) => {
         for (var i = 0; i < response.data.data.length; i++) {
           services.push(response.data.data[i])
@@ -219,9 +220,9 @@ export default {
       // }
     },
     update () {
-      axios.delete(baseUrl+"/default-subscription").
+      defaultSubscription.delete().
       then((response) => {
-        axios.post(baseUrl+"/default-subscription", this.plans).
+        defaultSubscription.post(this.plans).
         then((response) => {
           console.log(response)
         })

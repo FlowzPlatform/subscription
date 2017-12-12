@@ -2,9 +2,11 @@
   <div>
     <div class="container">
       <div align="center" style="margin-top: 10px;">
+        <span class="viewChange1" @click="setView('subscriptionList')">Subscription-List</span>
+        &nbsp;&nbsp;&nbsp;
         <span class="viewChange1" @click="setView('secureRoutes')">secure-routes</span>
         &nbsp;&nbsp;&nbsp;
-        <span class="viewChange2" @click="setView('setDefaultRoutes')">set-default-routes</span>
+        <span class="viewChange1" @click="setView('setDefaultRoutes')">set-default-routes</span>
       </div>
       <component :is="viewStyle"></component>
     </div>
@@ -14,10 +16,11 @@
 <script>
 import secureRoutes from './secureRoutes.vue'
 import setDefaultRoutes from './setDefaultRoutes.vue'
+import subscriptionList from './subscriptionList.vue'
 export default {
   name: 'index',
   components: {
-    secureRoutes, setDefaultRoutes
+    secureRoutes, setDefaultRoutes, subscriptionList
   },
   data(){
     return {
@@ -56,9 +59,9 @@ export default {
     color: blue;
   }
 
-  .viewChange2:hover {
+  /*.viewChange2:hover {
     cursor: pointer;
     color: blue;
   }
-
+*/
 </style>
