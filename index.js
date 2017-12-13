@@ -37,7 +37,7 @@ module.exports.subscription = async function (req, res, next) {
                               }
                             })
     // no user detail found then redirect to login page
-    if (userDetail.data.package !== undefined && userDetail.data.package.details !== undefined) {
+    if (userDetail.data.package === undefined || userDetail.data.package.details === undefined) {
       console.log('planExpire===>')
       res.redirect(401, subscriptionURL)
       return false
