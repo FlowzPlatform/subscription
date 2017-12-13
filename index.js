@@ -15,7 +15,7 @@ if (process.env['userDetailURL'] !== undefined && process.env['userDetailURL'] !
 }
 
 let secureService = {
-  validate: (route, params, secureRouteInfo) => {
+  validate: (route, params, secureRouteInfo, userDetail) => {
     return new Promise((resolve, reject) => {
       resolve(false)
     })
@@ -64,7 +64,7 @@ module.exports.subscription = async function (req, res, next) {
         try {
           console.log(secureService.validate.toString())
           if (typeof secureService.validate === 'function') {
-            let isSecure = await secureService.validate(mainRoute, req, findObj)
+            let isSecure = await secureService.validate(mainRoute, req, findObj, userDetail)
             if (isSecure !== true) {
               res.redirect(403, subscriptionURL)
               return false
