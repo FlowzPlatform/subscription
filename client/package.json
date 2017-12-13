@@ -14,15 +14,19 @@
     "bootstrap": "^3.3.7",
     "bootstrap-vue": "^1.2.0",
     "feathers": "^2.2.3",
+    "feathers-hooks": "^2.1.2",
     "feathers-socketio": "^2.0.1",
     "jquery": "^3.2.1",
     "lodash": "^4.17.4",
     "socket.io-client": "^2.0.4",
     "vue": "^2.5.2",
+    "vue-async-computed": "^3.3.1",
     "vue-awesome": "^2.3.4",
+    "vue-feathers": "^0.1.0",
     "vue-json-editor": "^1.2.1",
     "vue-router": "^3.0.1",
-    "vue-select": "github:sagalbot/vue-select"
+    "vue-select": "github:sagalbot/vue-select",
+    "vuex-router-sync": "^5.0.0"
   },
   "devDependencies": {
     "autoprefixer": "^7.1.2",

@@ -93,11 +93,10 @@ Vue.use(BootstrapVue);
 import 'bootstrap/dist/css/bootstrap.css'
 import 'bootstrap-vue/dist/bootstrap-vue.css'
 import _ from 'lodash'
-import axios from "axios";
 // let baseUrl = process.env.baseUrl;
-let baseUrl = 'http://172.16.230.253:3030'
 import 'vue-awesome/icons'
 import $ from 'jquery'
+import secureRoutes from '@/api/secure-routes'
 Vue.component('icon', Icon)
 export default {
   name: 'secureRoutes',
@@ -107,8 +106,8 @@ export default {
     }
   },
   created()  {
-    console.log('created')
-    axios.get(baseUrl+"/secure-routes").
+    // console.log('created')
+    secureRoutes.get().
     then((response) => {
       console.log(response)
       for (var i = 0; i < response.data.data.length; i++) {
@@ -136,10 +135,16 @@ export default {
       this.services.push({name:"",routes:[]})
     },
     update () {
-      axios.delete(baseUrl+"/secure-routes").
+      secureRoutes.delete().
       then((response) => {
         console.log(response)
-        axios.post(baseUrl+"/secure-routes", this.services).
+        var serviceArr = _.cloneDeep(this.services)
+        _.forEach(serviceArr, (serv, i) => {
+          _.forEach(serv.routes, (route, inx) => {
+            route.methods = _.filter(route.methods, {'active': true}) 
+          })
+        })
+        secureRoutes.post(serviceArr).
         then((response) => {
           console.log(response)
         })
