@@ -80,7 +80,7 @@ import defaultSubscription from '@/api/default-subscription'
           this.mainData = res.data.data
         })
         .catch(err => {
-          console.log('Error', err) 
+          console.log('Error', err)
         })
       },
       checkoutFunction (sub_id) {
@@ -93,5 +93,5 @@ import defaultSubscription from '@/api/default-subscription'
   }
 </script>
 <style scoped>
-  
+
 </style>

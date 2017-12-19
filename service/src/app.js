@@ -17,7 +17,7 @@ const appHooks = require('./app.hooks');
 
 const rethinkdb = require('./rethinkdb');
 
-const mongodb = require('./mongodb');
+// const mongodb = require('./mongodb');
 
 const app = feathers();
 
@@ -35,7 +35,7 @@ app.use('/', feathers.static(app.get('public')));
 
 // Set up Plugins and providers
 app.configure(hooks());
-app.configure(mongodb);
+// app.configure(mongodb);
 app.configure(rethinkdb);
 app.configure(rest());
 app.configure(socketio());
