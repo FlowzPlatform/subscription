@@ -2,12 +2,14 @@ let rp = require('request-promise')
 let defaultConfig = {
   'subscriptionURL': '/subscriptionlist',
   'userDetailURL': 'http://auth.flowz.com/api/userdetails',
-  'registerModuleURL': 'http://localhost:3030/register-resource'
+  'registerModuleURL': 'http://localhost:3030/register-resource',
+  'registerRoleURL': 'http://localhost:3030/register-roles'
 }
 
 let subscriptionURL = defaultConfig['subscriptionURL']
 let userDetailURL = defaultConfig['userDetailURL']
 let registerModuleURL = defaultConfig['registerModuleURL']
+let registerRoleURL = defaultConfig['registerRoleURL']
 
 if (process.env['subscriptionURL'] !== undefined && process.env['subscriptionURL'] !== '') {
   subscriptionURL = process.env['subscriptionURL']
@@ -18,10 +20,14 @@ if (process.env['userDetailURL'] !== undefined && process.env['userDetailURL'] !
 if (process.env['registerModuleURL'] !== undefined && process.env['registerModuleURL'] !== '') {
   registerModuleURL = process.env['registerModuleURL']
 }
+if (process.env['registerRoleURL'] !== undefined && process.env['registerRoleURL'] !== '') {
+  registerRoleURL = process.env['registerRoleURL']
+}
 
 let moduleResource = {
   'moduleName': '',
-  'registerAppModule': ''
+  'registerAppModule': '',
+  'appRoles': ['Admin']
 }
 
 module.exports.moduleResource = moduleResource
@@ -126,7 +132,7 @@ let getUserPackage = async function (authorization) {
   })
 }
 
-async function registeredAppModules () {
+async function registeredAppModulesRole () {
   console.log('==================moduleName========', moduleResource.moduleName)
   if (moduleResource.moduleName === '') {
     console.log('Please enter module name')
@@ -142,9 +148,17 @@ async function registeredAppModules () {
     let regiserData = await registerToMainService(moduleResource.moduleName, resourceName, moduleResource.registerAppModule[resourceName])
     console.log('==============registerData=====', regiserData)
   }
+
+  console.log('==================moduleName========', moduleResource.appRoles)
+  if (moduleResource.appRoles === undefined || moduleResource.appRoles.length === 0) {
+    console.log('Please register your modules in "registerAppModule"')
+    process.exit()
+  }
+  let regiserData = await registerToMainRole(moduleResource.moduleName, moduleResource.appRoles)
+  console.log('==============registerRole Data=====', regiserData)
 }
 
-module.exports.registeredAppModules = registeredAppModules
+module.exports.registeredAppModulesRole = registeredAppModulesRole
 
 async function registerToMainService (modulename, resource, actions, authorization) {
   return new Promise((resolve, reject) => {
@@ -162,6 +176,36 @@ async function registerToMainService (modulename, resource, actions, authorizati
       // }
     }
     console.log("=======RP======", options)
+    rp(options)
+    .then(function (resourceDetails) {
+      console.log(resourceDetails)
+      resolve(resourceDetails)
+
+    })
+    .catch(function (err) {
+      console.log(err)
+      if (err) {
+      }
+      resolve(null)
+    })
+  })
+}
+
+async function registerToMainRole (modulename, roles, authorization) {
+  return new Promise((resolve, reject) => {
+    var options = {
+      method: 'post',
+      uri: registerRoleURL,
+      body: {
+        'module': modulename,
+        'roles': roles
+      },
+      json: true
+      // headers: {
+      //   'authorization': authorization
+      // }
+    }
+    console.log("=======RP==role====", options)
     rp(options)
     .then(function (resourceDetails) {
       resolve(resourceDetails)
