@@ -5,7 +5,9 @@ module.exports = {
     all: [],
     find: [],
     get: [],
-    create: [],
+    create: [
+      hook => modify(hook)
+    ],
     update: [],
     patch: [],
     remove: []
@@ -31,3 +33,10 @@ module.exports = {
     remove: []
   }
 };
+
+function modify(hook){
+  // console.log("hook......",hook)
+  module.exports.apiHeaders = this.apiHeaders;
+  // console.log("module.....",module.exports.apiHeaders.authorization)
+  hook.params.query.authorization = module.exports.apiHeaders.authorization
+}

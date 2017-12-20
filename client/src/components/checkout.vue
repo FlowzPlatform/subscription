@@ -38,10 +38,10 @@
                                 <div class="form-group" style="text-align:left">EXPIRY DATE
                                   <div class="row">
                                     <div class="col-xs-6 col-lg-6 col-md-6">
-                                        <input v-model="payDetail.expiryMM" type="text" class="form-control" id="expiryMonth" placeholder="MM" required/> 
+                                        <input v-model="payDetail.expiryMM" type="text" class="form-control" id="expiryMonth" placeholder="MM" required/>
                                     </div>
                                     <div class="col-xs-6 col-lg-6 col-md-6">
-                                        <input type="text" v-model="payDetail.expiryYY" class="form-control" id="expiryYear" placeholder="YY" required/> 
+                                        <input type="text" v-model="payDetail.expiryYY" class="form-control" id="expiryYear" placeholder="YY" required/>
                                     </div>
                                   </div>
                                 </div>
@@ -75,6 +75,8 @@
 // import axios from 'axios'
 import defaultSubscription from '@/api/default-subscription'
 import checkoutApi from '@/api/checkout'
+import axios from 'axios'
+
 export default {
   name: 'checkout',
   components: {
@@ -83,10 +85,10 @@ export default {
     return {
       payDetail: {
         cardType: '0',
-        cardNumber: '',
-        expiryMM: '',
-        expiryYY: '',
-        cvCode: ''
+        cardNumber: '4242424242424242',
+        expiryMM: '09',
+        expiryYY: '22',
+        cvCode: '123'
       },
       sub_id: '',
       login_token: '',
@@ -106,27 +108,57 @@ export default {
       this.$router.push('/')
     },
     payFunction () {
+		let self = this
+		let auth_token = this.$cookie.get('auth_token')
+			console.log("++++++++++++",this.$cookie.get('auth_token'));
       var sObj = {
         sub_id: this.sub_id,
         login_token: this.login_token,
         payDetail: this.payDetail
       }
-      checkoutApi.post(sObj).then(res => {
-        console.log('RESPONSE', res)
-        this.payDone = true
-        if (res.data.hasOwnProperty('error')) {
-          this.payInfo.class = 'alert alert-danger'
-          this.payInfo.msgType = 'Error!'
-          this.payInfo.msg = 'Payment Not Done.'
-        } else {
-          this.payInfo.class = 'alert alert-success'
-          this.payInfo.msgType = 'Success!'
-          this.payInfo.msg = 'Payment successfully Done.'
-        }
-      })
-      .catch(err => {
-        console.log('Error', err)
-      })
+
+			axios({
+							method:'post',
+							url:"http://localhost:3030/checkout",
+							headers: {'authorization': auth_token},
+							data:sObj
+						}).then(res => {
+							console.log("response.....",res)
+							this.payDone = true
+			        if (res.data.hasOwnProperty('error')) {
+			          this.payInfo.class = 'alert alert-danger'
+			          this.payInfo.msgType = 'Error!'
+			          this.payInfo.msg = 'Payment Not Done.'
+			        } else {
+			          this.payInfo.class = 'alert alert-success'
+			          this.payInfo.msgType = 'Success!'
+			          this.payInfo.msg = 'Payment successfully Done.'
+			        }
+
+					 })
+					 .catch(function (error) {
+						 console.log("**********",error)
+						 self.$Notice.error({
+								 duration: 5,
+								 title: 'Please check...some error'
+						 });
+					 });
+      // checkoutApi.post(sObj).then(res => {
+      //   console.log('RESPONSE', res)
+      //   this.payDone = true
+      //   if (res.data.hasOwnProperty('error')) {
+      //     this.payInfo.class = 'alert alert-danger'
+      //     this.payInfo.msgType = 'Error!'
+      //     this.payInfo.msg = 'Payment Not Done.'
+      //   } else {
+      //     this.payInfo.class = 'alert alert-success'
+      //     this.payInfo.msgType = 'Success!'
+      //     this.payInfo.msg = 'Payment successfully Done.'
+      //   }
+      // })
+      // .catch(err => {
+      //   console.log('Error', err)
+      // })
     }
   },
   'watch': {

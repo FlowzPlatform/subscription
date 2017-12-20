@@ -23,6 +23,7 @@
     "vue": "^2.5.2",
     "vue-async-computed": "^3.3.1",
     "vue-awesome": "^2.3.4",
+    "vue-cookie": "^1.1.4",
     "vue-feathers": "^0.1.0",
     "vue-json-editor": "^1.2.1",
     "vue-router": "^3.0.1",
