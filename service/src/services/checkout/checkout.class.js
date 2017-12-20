@@ -95,12 +95,30 @@ var createFunction = async (function(data,params) {
     let userDetail = await (getUserPackage(config.headers.authorization))
     // console.log('userDetail', userDetail)
     if (userDetail != null) {
-      // console.log('userDetail......', userDetail.data)
-      console.log('Valid Token! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>.')
-      var packageObj = await (makePackageObj(thisSubscription, checkout_res.id))
-      var u_id = userDetail.data._id
-      // console.log('.............', packageObj)
-      var _resConfirm = await (axios.put(updateUserURL + u_id, {package: packageObj}, config))
+      console.log('userDetail......', userDetail.data)
+      if(userDetail.data.hasOwnProperty("package")){
+        var packageObj = await (makePackageObj(thisSubscription, checkout_res.id))
+        var u_id = userDetail.data._id
+        if(userDetail.data.hasOwnProperty("package_history")){
+          userDetail.data.package_history.push(userDetail.data.package)
+          console.log('Valid Token! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>.')
+          var _resConfirm = await (axios.put(updateUserURL + u_id, {package: packageObj,package_history:userDetail.data.package_history}, config))
+        }
+        else {
+          let package_history = []
+          package_history.push(userDetail.data.package)
+          console.log('Valid Token! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>.')
+          var _resConfirm = await (axios.put(updateUserURL + u_id, {package: packageObj,package_history:package_history}, config))
+        }
+      }
+      else {
+        console.log('Valid Token! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>.')
+        var packageObj = await (makePackageObj(thisSubscription, checkout_res.id))
+        var u_id = userDetail.data._id
+        // console.log('.............', packageObj)
+        var _resConfirm = await (axios.put(updateUserURL + u_id, {package: packageObj}, config))
+      }
+
       // console.log('>>>>>>>>>>>>>>>>>>>>>>>>>>>..', _resConfirm.data)
     } else {
       console.log('Not Valid Token!')
@@ -140,7 +158,11 @@ let makePackageObj = async (function (subData, trans_id) {
     expiredOn : exdate,
     details : detail,
     sub_id : subData.id,
-    trans_id: trans_id
+    trans_id: trans_id,
+    name: subData.name,
+    price: subData.price,
+    time_unit: subData.time_unit,
+    validity: subData.validity
   }
   return package
 })
