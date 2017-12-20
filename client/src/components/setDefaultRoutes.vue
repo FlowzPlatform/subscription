@@ -147,8 +147,8 @@
                                 </td>
                                 <td class="">
                                   <div class="ivu-table-cell">
-                                        <Input type="text" v-model="item.value" placeholder="Module" size="small" class="schema-form-input" v-if="item.value == 0" ></Input>
-                                      <Input type="text" v-model="item.value" placeholder="Module" size="small" class="schema-form-input redInput" v-else ></Input>
+                                        <Input type="text" v-model="item.value" placeholder="Module" size="small" class="schema-form-input" v-if="item.value == 0" @on-change="update()"></Input>
+                                      <Input type="text" v-model="item.value" placeholder="Module" size="small" class="schema-form-input redInput" v-else  @on-change="update()"></Input>
                                   </div>
                                 </td>
                             </tr>
@@ -201,7 +201,6 @@ Vue.use(iView, { locale })
 
 import 'vue-awesome/icons'
 import $ from 'jquery'
-let plans1 = []
 Vue.component('icon', Icon)
 export default {
   name: 'setDefaultRoutes',
@@ -212,8 +211,7 @@ export default {
       plans: [],
       currentOpen: [],
       time_units: ['day/s', 'month/s', 'year/s'],
-      data5: [],
-      activeColor: 'red'
+      data5: []
 }
   },
   created()  {
@@ -302,12 +300,6 @@ export default {
       });
   },
   methods: {
-    myFunction(val,i,filtered_index,data5,action) {
-      console.log(val,i,filtered_index,data5)
-      let filtered =  _.findIndex( data5[i]["children"][filtered_index]["children"],{'title':action});
-      console.log("filtered",filtered)
-      data5[i]["children"][filtered_index]["children"][filtered]["children"][0]["value"] = val
-    },
     checkOpen (index) {
       // if (_.intersection(this.currentOpen,[index]).length > 0)) return true
       return false
@@ -413,7 +405,7 @@ export default {
           });
         });
 
-        this.plans.push({
+        self.plans.push({
          name: '',
          validity:'',
          price:'',
@@ -432,7 +424,7 @@ export default {
       $('#plan_'+plan).slideToggle(700)
     },
     update () {
-      let obj1 = []
+      // let obj1 = []
       console.log("this.plans",this.plans)
     //   for(let i=0;i<plans1.length;i++){
     //     obj1 = []
@@ -501,14 +493,14 @@ export default {
                           data:this.plans
                         }).then(response => {
                             console.log("response...",response)
-                            self.$Notice.success({
+                            this.$Notice.success({
                                 duration: 2,
                                 title: 'Updated successfully...'
                             });
                           })
                           .catch(function (error) {
                             console.log("**********",error)
-                            self.$Notice.error({
+                            this.$Notice.error({
                                 duration: 5,
                                 title: 'Please check...some error'
                             });
@@ -516,7 +508,7 @@ export default {
               })
               .catch(function (error) {
                 console.log("**********",error)
-                self.$Notice.error({
+                this.$Notice.error({
                     duration: 5,
                     title: 'Please check...some error'
                 });
@@ -655,15 +647,6 @@ export default {
     text-align: left;
   }
 
-  .ivu-card-bordered {
-    border: 4px solid #dddee1;
-    border-color: #072C75;
-    margin-left: 25%;
-    margin-right: 25%;
-    margin-bottom: 1%;
-
-}
-
 .ivu-card-bordered:hover {
   border-color: #072C75;
   /*border: 4px solid #dddee1;*/
@@ -698,12 +681,17 @@ export default {
     display: inline-block;
 }
 
-.active text-danger{
-  background-color:red;
+.ivu-card-bordered {
+    border: 4px solid #dddee1;
+    border-color: #072C75;
+    margin-left: 20%;
+    margin-right: 20%;
+    margin-bottom: 1%;
+    width: 60%;
 }
 
 .redInput input {
-  background-color: #ff0000;
+  background-color: #19be6b;
   color: #fff;
 }
 </style>
