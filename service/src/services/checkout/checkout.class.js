@@ -65,7 +65,7 @@ var getThisSubscription = async(function (id) {
 })
 
 var createFunction = async (function(data,params) {
-  console.log("+++++++++++ data",data)
+  // console.log("+++++++++++ data",data)
   var thisSubscription = await (getThisSubscription(data.sub_id))
   // console.log('thisSubscription', thisSubscription)
   var paymentObj = await (payObj(data, thisSubscription.price))
@@ -96,7 +96,7 @@ var createFunction = async (function(data,params) {
       console.log('Valid Token! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>.')
       var packageObj = await (makePackageObj(thisSubscription, checkout_res.id))
       var u_id = userDetail.data._id
-      console.log('.............', packageObj)
+      // console.log('.............', packageObj)
       var _resConfirm = await (axios.put(updateUserURL + u_id, {package: packageObj}, config))
       // console.log('>>>>>>>>>>>>>>>>>>>>>>>>>>>..', _resConfirm.data)
     } else {
@@ -107,7 +107,7 @@ var createFunction = async (function(data,params) {
 })
 
 let makePackageObj = async (function (subData, trans_id) {
-  console.log('....................', subData)
+  // console.log('....................', subData)
   var exdate = new Date()
   exdate.setDate(exdate.getDate() + subData.validity)
   var detail = []
@@ -118,7 +118,7 @@ let makePackageObj = async (function (subData, trans_id) {
     obj.method = subData.details[i].action
     obj.route = subData.details[i].url
     obj.value = subData.details[i].value
-    console.log("obj.........................",obj)
+    // console.log("obj.........................",obj)
     detail.push(obj)
   }
   // for(let [inx, _service] of subData.services.entries()) {

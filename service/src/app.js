@@ -40,7 +40,7 @@ app.use('/', feathers.static(app.get('public')));
   //   this.XApiToken = req.headers['x-api-token'];
     // this.XApiLogin = req.headers['authorization'];
     this.apiHeaders = req.headers ;
-    console.log("this",  this.apiHeaders)
+    // console.log("this",  this.apiHeaders)
     // module.exports.apiHeaders = this.apiHeaders;
     // req.feathers = req.headers['x-api-token'];
     res.header("Access-Control-Allow-Origin", "*");

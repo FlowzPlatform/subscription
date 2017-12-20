@@ -49,10 +49,7 @@ var modify = async(function(hook){
   console.log("++++++++++++++++++",module,service)
   obj[module] = {}
   obj[module][service] = {}
-  // var conn = require('rethinkdbdash')({
-  //   host: '139.59.35.45', port: 28016, db: 'subscription'
-  // })
-  // var tdata = await (conn.table('register_resource').run())
+
   var tdata = await(hook.app.service('/register-resource').find())
 
   console.log('tdata', tdata)
@@ -86,7 +83,6 @@ var modify = async(function(hook){
 
     }
     else{
-
       for(let key in hook.data.actions[0]) {
         let key1 = key.toLowerCase()
         let action1 = hook.data.actions[0][key].toLowerCase()
