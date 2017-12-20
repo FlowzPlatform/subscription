@@ -1,7 +1,8 @@
 let rp = require('request-promise')
 let defaultConfig = {
   'subscriptionURL': '/subscriptionlist',
-  'userDetailURL': 'http://auth.flowz.com/api/userdetails'
+  'userDetailURL': 'http://auth.flowz.com/api/userdetails',
+  'registerModuleURL': 'http://localhost:3030/register-resource'
 }
 
 let subscriptionURL = defaultConfig['subscriptionURL']
@@ -14,8 +15,10 @@ if (process.env['userDetailURL'] !== undefined && process.env['userDetailURL'] !
   userDetailURL = process.env['userDetailURL']
 }
 
-let registerAppModules = []
+let moduleName = ''
+module.exports.moduleName = moduleName
 
+let registerAppModules = {}
 module.exports.registerAppModule = registerAppModules
 
 let secureService = {
@@ -119,11 +122,15 @@ let getUserPackage = async function (authorization) {
 }
 
 function registeredAppModules () {
-  if (registerAppModule.length === 0) {
+  if (moduleName === '') {
+    console.log('Please enter module name')
+    process.exit()
+  }
+  if (registerAppModules.length === 0) {
     console.log('Please register your modules in "registerAppModule"')
     process.exit()
   }
 }
-console.log("=============2111=======")
-// registeredAppModules()
-console.log("=============2333=======")
+// console.log("=============2111=======")
+// // registeredAppModules()
+// console.log("=============2333=======")
