@@ -1,3 +1,7 @@
-/client
-/service
+.md
+client/
+service/
+node_modules/
 .git
+.directory
+.gitignore
