@@ -24,7 +24,7 @@ class Service {
   }
 
   create (data, params) {
-    var res = createFunction(data)
+    var res = createFunction(data,params)
     return Promise.resolve(res);
   }
 
@@ -60,19 +60,20 @@ var payObj = async( function (data, price) {
 })
 
 var getThisSubscription = async(function (id) {
-  var res = await (axios.get(baseURL + '/default-subscription/' + id))
+  var res = await (axios.get(baseURL + '/subscription-plans/' + id))
   return res.data
 })
 
-var createFunction = async ( function(data) {
+var createFunction = async (function(data,params) {
+  console.log("+++++++++++ data",data)
   var thisSubscription = await (getThisSubscription(data.sub_id))
   // console.log('thisSubscription', thisSubscription)
   var paymentObj = await (payObj(data, thisSubscription.price))
   var config = {
     headers:  {
     'Content-Type': 'application/json',
-    'X-api-token':  '',
-    'authorization': ''
+    'X-api-token':  'sk_test_V8ZICJodc73pjyGVBBzA0Dkb',
+    'authorization': params.query.authorization
     }
   }
   // console.log(paymentObj)
@@ -106,22 +107,32 @@ var createFunction = async ( function(data) {
 })
 
 let makePackageObj = async (function (subData, trans_id) {
-  // console.log('....................', subData)
+  console.log('....................', subData)
   var exdate = new Date()
   exdate.setDate(exdate.getDate() + subData.validity)
   var detail = []
-  for(let [inx, _service] of subData.services.entries()) {
-    var obj = {}
-    obj.service = _service.name
-    for(let [i, _route] of _service.routes.entries()) {
-      obj.routes = _route.name
-      for(let [inxx, mobj] of _route.methods.entries()) {
-        obj.method = mobj.name
-        obj.value = mobj.value
-      }
-    }
+  for(let i=0;i<subData.details.length;i++){
+    let obj = {}
+    obj.module = subData.details[i].module
+    obj.service = subData.details[i].service
+    obj.method = subData.details[i].action
+    obj.route = subData.details[i].url
+    obj.value = subData.details[i].value
+    console.log("obj.........................",obj)
     detail.push(obj)
   }
+  // for(let [inx, _service] of subData.services.entries()) {
+  //   var obj = {}
+  //   obj.service = _service.name
+  //   for(let [i, _route] of _service.routes.entries()) {
+  //     obj.routes = _route.name
+  //     for(let [inxx, mobj] of _route.methods.entries()) {
+  //       obj.method = mobj.name
+  //       obj.value = mobj.value
+  //     }
+  //   }
+  //   detail.push(obj)
+  // }
   var package = {
     expiredOn : exdate,
     details : detail,

@@ -43,25 +43,44 @@ var modify = async(function(hook){
   console.log("***********hook",hook.params)
   let obj = {}
   let flag = true
-  obj[hook.data.module] = {}
-  obj[hook.data.module][hook.data.service] = {}
-  var conn = require('rethinkdbdash')({
-    host: 'localhost', port: 28015, db: 'subscription'
-  })
-  var tdata = await (conn.table('register_resource').run())
+  let id = ''
+  let module = hook.data.module.toLowerCase()
+  let service = hook.data.service.toLowerCase()
+  console.log("++++++++++++++++++",module,service)
+  obj[module] = {}
+  obj[module][service] = {}
+  // var conn = require('rethinkdbdash')({
+  //   host: '139.59.35.45', port: 28016, db: 'subscription'
+  // })
+  // var tdata = await (conn.table('register_resource').run())
+  var tdata = await(hook.app.service('/register-resource').find())
+
   console.log('tdata', tdata)
 
-  if(tdata.length != 0){
-  for(let [i, mObj] of tdata.entries()) {
-    console.log(mObj.hasOwnProperty(hook.data.module) ,mObj[hook.data.module],mObj)
-    if(mObj.hasOwnProperty(hook.data.module)){
-       if(mObj[hook.data.module].hasOwnProperty(hook.data.service)){
-         console.log("yes")
-         flag = false
+  if(tdata.data.length != 0){
+  for(let [i, mObj] of tdata.data.entries()) {
+    console.log(mObj.hasOwnProperty(module) ,mObj[module],mObj)
+    if(mObj.hasOwnProperty(module)){
+       if(mObj[module].hasOwnProperty(service)){
+         console.log("yes",mObj)
+         id = mObj.id
+         for(let key in hook.data.actions[0]) {
+           let key1 = key.toLowerCase()
+           let action1 = hook.data.actions[0][key].toLowerCase()
+           console.log("key1.action1",key1,action1)
+           obj[module][service][key1] = action1
+         }
+         hook.app.service('/register-resource').update(id,obj).then(result => {
+             console.log("result....",result)
+         });
+           flag = false
        }
        else{
          for(let key in hook.data.actions[0]) {
-           obj[hook.data.module][hook.data.service][key] = hook.data.actions[0][key]
+           let key1 = key.toLowerCase()
+           let action1 = hook.data.actions[0][key].toLowerCase()
+           console.log("key1.action1",key1,action1)
+           obj[module][service][key1] = action1
          }
        }
 
@@ -69,14 +88,20 @@ var modify = async(function(hook){
     else{
 
       for(let key in hook.data.actions[0]) {
-        obj[hook.data.module][hook.data.service][key] = hook.data.actions[0][key]
+        let key1 = key.toLowerCase()
+        let action1 = hook.data.actions[0][key].toLowerCase()
+        console.log("key1.action1",key1,action1)
+        obj[module][service][key1] = action1
       }
     }
   }
  }
  else{
    for(let key in hook.data.actions[0]) {
-     obj[hook.data.module][hook.data.service][key] = hook.data.actions[0][key]
+     let key1 = key.toLowerCase()
+     let action1 = hook.data.actions[0][key].toLowerCase()
+     console.log("key1.action1",key1,action1)
+     obj[module][service][key1] = action1
    }
  }
  if(flag == true){
@@ -86,6 +111,7 @@ var modify = async(function(hook){
  else{
    console.log("false.....")
    hook.data = []
+   hook.result = {"data":"updated"}
  }
 })
 

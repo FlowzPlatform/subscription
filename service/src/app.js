@@ -33,6 +33,20 @@ app.use(favicon(path.join(app.get('public'), 'favicon.ico')));
 // Host the public folder
 app.use('/', feathers.static(app.get('public')));
 
+ app.use(function(req, res, next) {
+   console.log("app.use........" + Object.keys(req));
+  //  console.log("res "+ JSON.stringify(req.res));
+  //   console.log("==" + req.headers['x-api-token'] + "--");
+  //   this.XApiToken = req.headers['x-api-token'];
+    // this.XApiLogin = req.headers['authorization'];
+    this.apiHeaders = req.headers ;
+    console.log("this",  this.apiHeaders)
+    // module.exports.apiHeaders = this.apiHeaders;
+    // req.feathers = req.headers['x-api-token'];
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept"); next();
+  });
+
 // Set up Plugins and providers
 app.configure(hooks());
 // app.configure(mongodb);
