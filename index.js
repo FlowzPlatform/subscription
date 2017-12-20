@@ -7,6 +7,7 @@ let defaultConfig = {
 
 let subscriptionURL = defaultConfig['subscriptionURL']
 let userDetailURL = defaultConfig['userDetailURL']
+let registerModuleURL = defaultConfig['registerModuleURL']
 
 if (process.env['subscriptionURL'] !== undefined && process.env['subscriptionURL'] !== '') {
   subscriptionURL = process.env['subscriptionURL']
@@ -14,12 +15,16 @@ if (process.env['subscriptionURL'] !== undefined && process.env['subscriptionURL
 if (process.env['userDetailURL'] !== undefined && process.env['userDetailURL'] !== '') {
   userDetailURL = process.env['userDetailURL']
 }
+if (process.env['registerModuleURL'] !== undefined && process.env['registerModuleURL'] !== '') {
+  registerModuleURL = process.env['registerModuleURL']
+}
 
-let moduleName = ''
-module.exports.moduleName = moduleName
+let moduleResource = {
+  'moduleName': '',
+  'registerAppModule': ''
+}
 
-let registerAppModules = {}
-module.exports.registerAppModule = registerAppModules
+module.exports.moduleResource = moduleResource
 
 let secureService = {
   validate: (route, params, secureRouteInfo, userDetail) => {
@@ -121,15 +126,52 @@ let getUserPackage = async function (authorization) {
   })
 }
 
-function registeredAppModules () {
-  if (moduleName === '') {
+async function registeredAppModules () {
+  console.log('==================moduleName========', moduleResource.moduleName)
+  if (moduleResource.moduleName === '') {
     console.log('Please enter module name')
     process.exit()
   }
-  if (registerAppModules.length === 0) {
+  console.log('==================moduleName========', moduleResource.registerAppModule)
+  if (Object.keys(moduleResource.registerAppModule).length === 0) {
     console.log('Please register your modules in "registerAppModule"')
     process.exit()
   }
+
+  for(let resourceName in moduleResource.registerAppModule) {
+    let regiserData = await registerToMainService(moduleResource.moduleName, resourceName, moduleResource.registerAppModule[resourceName])
+    console.log('==============registerData=====', regiserData)
+  }
+}
+
+module.exports.registeredAppModules = registeredAppModules
+
+async function registerToMainService (modulename, resource, actions, authorization) {
+  return new Promise((resolve, reject) => {
+    var options = {
+      method: 'post',
+      uri: registerModuleURL,
+      body: {
+        'module': modulename,
+        'service': resource,
+        'actions': [actions]
+      },
+      json: true
+      // headers: {
+      //   'authorization': authorization
+      // }
+    }
+    console.log("=======RP======", options)
+    rp(options)
+    .then(function (resourceDetails) {
+      resolve(resourceDetails)
+    })
+    .catch(function (err) {
+      if (err) {
+      }
+      resolve(null)
+    })
+  })
 }
 // console.log("=============2111=======")
 // // registeredAppModules()
