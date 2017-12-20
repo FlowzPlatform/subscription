@@ -34,7 +34,7 @@ app.use(favicon(path.join(app.get('public'), 'favicon.ico')));
 app.use('/', feathers.static(app.get('public')));
 
  app.use(function(req, res, next) {
-   console.log("app.use........" + Object.keys(req));
+  //  console.log("app.use........" + Object.keys(req));
   //  console.log("res "+ JSON.stringify(req.res));
   //   console.log("==" + req.headers['x-api-token'] + "--");
   //   this.XApiToken = req.headers['x-api-token'];

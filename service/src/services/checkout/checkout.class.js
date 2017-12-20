@@ -8,6 +8,9 @@ let baseURL = 'http://' + config.host + ':' + config.port
 let payURL = 'http://api.flowz.com/payment/payment'
 let updateUserURL = 'http://api.flowz.com/user/updateuserdetails/'
 let userDetailURL = 'http://auth.flowz.com/api/userdetails'
+const config1 = require('../../../config/default.json');
+if (process.env.x_api_token != '')
+    config1.x_api_token = process.env.x_api_token
 class Service {
   constructor (options) {
     this.options = options || {};
@@ -72,7 +75,7 @@ var createFunction = async (function(data,params) {
   var config = {
     headers:  {
     'Content-Type': 'application/json',
-    'X-api-token':  'sk_test_V8ZICJodc73pjyGVBBzA0Dkb',
+    'X-api-token':  config1.x_api_token,
     'authorization': params.query.authorization
     }
   }
