@@ -65,6 +65,7 @@
 </template>
 <script>
 import defaultSubscription from '@/api/default-subscription'
+import axios from 'axios'
 
   export default {
     name: 'subscriptionList',
@@ -75,13 +76,30 @@ import defaultSubscription from '@/api/default-subscription'
     },
     methods: {
       init () {
-        defaultSubscription.get().then(res => {
-          console.log('response defaultSubscription', res.data.data)
-          this.mainData = res.data.data
-        })
-        .catch(err => {
-          console.log('Error', err) 
-        })
+        // defaultSubscription.get().then(res => {
+        //   console.log('response defaultSubscription', res.data.data)
+        //   this.mainData = res.data.data
+        // })
+        // .catch(err => {
+        //   console.log('Error', err)
+        // })
+
+				  axios({
+									method:'get',
+									url:"http://localhost:3030/subscription-plans"
+								}).then(response => {
+									console.log("response.....",response)
+									for(let i=0;i<response.data.data.length;i++){
+									  this.mainData.push(response.data.data[i])
+								 }
+							 })
+							 .catch(function (error) {
+								 console.log("**********",error)
+								 this.$Notice.error({
+										 duration: 5,
+										 title: 'Please check...some error'
+								 });
+							 });
       },
       checkoutFunction (sub_id) {
         this.$router.push('/checkout/' + sub_id)
@@ -93,5 +111,5 @@ import defaultSubscription from '@/api/default-subscription'
   }
 </script>
 <style scoped>
-  
+
 </style>
