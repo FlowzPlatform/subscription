@@ -85,10 +85,10 @@ export default {
     return {
       payDetail: {
         cardType: '0',
-        cardNumber: '4242424242424242',
-        expiryMM: '09',
-        expiryYY: '22',
-        cvCode: '123'
+        cardNumber: '',
+        expiryMM: '',
+        expiryYY: '',
+        cvCode: ''
       },
       sub_id: '',
       login_token: '',
@@ -110,7 +110,7 @@ export default {
     payFunction () {
 		let self = this
 		let auth_token = this.$cookie.get('auth_token')
-			console.log("++++++++++++",this.$cookie.get('auth_token'));
+			// console.log("++++++++++++",this.$cookie.get('auth_token'));
       var sObj = {
         sub_id: this.sub_id,
         login_token: this.login_token,

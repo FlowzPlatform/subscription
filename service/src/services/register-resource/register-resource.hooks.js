@@ -49,6 +49,12 @@ var modify = async(function(hook){
   console.log("++++++++++++++++++",module,service)
   obj[module] = {}
   obj[module][service] = {}
+  for(let key in hook.data.actions[0]) {
+    let key1 = key.toLowerCase()
+    let action1 = hook.data.actions[0][key].toLowerCase()
+    console.log("key1.action1",key1,action1)
+    obj[module][service][key1] = action1
+  }
 
   var tdata = await(hook.app.service('/register-resource').find())
 
@@ -61,54 +67,34 @@ var modify = async(function(hook){
        if(mObj[module].hasOwnProperty(service)){
          console.log("yes",mObj)
          id = mObj.id
-         for(let key in hook.data.actions[0]) {
-           let key1 = key.toLowerCase()
-           let action1 = hook.data.actions[0][key].toLowerCase()
-           console.log("key1.action1",key1,action1)
-           obj[module][service][key1] = action1
-         }
          hook.app.service('/register-resource').update(id,obj).then(result => {
              console.log("result....",result)
          });
-           flag = false
+         hook.data = []
+         hook.result = {"data":"updated"}
        }
        else{
-         for(let key in hook.data.actions[0]) {
-           let key1 = key.toLowerCase()
-           let action1 = hook.data.actions[0][key].toLowerCase()
-           console.log("key1.action1",key1,action1)
-           obj[module][service][key1] = action1
-         }
+          hook.data = obj
        }
 
     }
     else{
-      for(let key in hook.data.actions[0]) {
-        let key1 = key.toLowerCase()
-        let action1 = hook.data.actions[0][key].toLowerCase()
-        console.log("key1.action1",key1,action1)
-        obj[module][service][key1] = action1
-      }
+       hook.data = obj
     }
   }
  }
  else{
-   for(let key in hook.data.actions[0]) {
-     let key1 = key.toLowerCase()
-     let action1 = hook.data.actions[0][key].toLowerCase()
-     console.log("key1.action1",key1,action1)
-     obj[module][service][key1] = action1
-   }
+    hook.data = obj
  }
- if(flag == true){
-   console.log("true.......")
-   hook.data = obj
- }
- else{
-   console.log("false.....")
-   hook.data = []
-   hook.result = {"data":"updated"}
- }
+ // if(flag == true){
+ //   console.log("true.......")
+ //   hook.data = obj
+ // }
+ // else{
+ //   console.log("false.....")
+ //   hook.data = []
+ //   hook.result = {"data":"updated"}
+ // }
 })
 
 

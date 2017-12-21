@@ -95,7 +95,7 @@ var createFunction = async (function(data,params) {
     let userDetail = await (getUserPackage(config.headers.authorization))
     // console.log('userDetail', userDetail)
     if (userDetail != null) {
-      console.log('userDetail......', userDetail.data)
+      // console.log('userDetail......', userDetail.data)
       if(userDetail.data.hasOwnProperty("package")){
         var packageObj = await (makePackageObj(thisSubscription, checkout_res.id))
         var u_id = userDetail.data._id
