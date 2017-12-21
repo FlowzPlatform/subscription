@@ -42,50 +42,43 @@ var modify = async(function(hook){
   console.log("***********hook",hook.data)
   console.log("***********hook",hook.params)
   let obj = {}
-  let flag = true
-  obj[hook.data.module] = {}
-  obj[hook.data.module][hook.data.service] = {}
-  var conn = require('rethinkdbdash')({
-    host: 'localhost', port: 28015, db: 'subscription'
-  })
-  var tdata = await (conn.table('register_resource').run())
+  let action_obj = {}
+  let id = ''
+  let module = hook.data.module.toLowerCase()
+  let service = hook.data.service.toLowerCase()
+  console.log("++++++++++++++++++",module,service)
+  obj["module"] = module
+  obj["service"] = service
+  obj["actions"] = []
+  for(let key in hook.data.actions[0]) {
+    let key1 = key.toLowerCase()
+    let action1 = hook.data.actions[0][key].toLowerCase()
+    console.log("key1.action1",key1,action1)
+    action_obj[key1] = action1
+  }
+  obj["actions"].push(action_obj)
+
+  var tdata = await(hook.app.service('/register-resource').find())
+
   console.log('tdata', tdata)
 
-  if(tdata.length != 0){
-  for(let [i, mObj] of tdata.entries()) {
-    console.log(mObj.hasOwnProperty(hook.data.module) ,mObj[hook.data.module],mObj)
-    if(mObj.hasOwnProperty(hook.data.module)){
-       if(mObj[hook.data.module].hasOwnProperty(hook.data.service)){
-         console.log("yes")
-         flag = false
-       }
-       else{
-         for(let key in hook.data.actions[0]) {
-           obj[hook.data.module][hook.data.service][key] = hook.data.actions[0][key]
-         }
-       }
-
+  if(tdata.data.length != 0){
+  for(let [i, mObj] of tdata.data.entries()) {
+    if(mObj.module == module && mObj.service == service){
+         id = mObj.id
+         hook.app.service('/register-resource').update(id,obj).then(result => {
+             console.log("result....",result)
+         });
+         hook.data = []
+         hook.result = {"data":"updated"}
     }
     else{
-
-      for(let key in hook.data.actions[0]) {
-        obj[hook.data.module][hook.data.service][key] = hook.data.actions[0][key]
-      }
+       hook.data = obj
     }
   }
  }
  else{
-   for(let key in hook.data.actions[0]) {
-     obj[hook.data.module][hook.data.service][key] = hook.data.actions[0][key]
-   }
- }
- if(flag == true){
-   console.log("true.......")
-   hook.data = obj
- }
- else{
-   console.log("false.....")
-   hook.data = []
+    hook.data = obj
  }
 })
 

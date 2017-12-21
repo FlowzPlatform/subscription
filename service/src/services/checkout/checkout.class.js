@@ -8,6 +8,9 @@ let baseURL = 'http://' + config.host + ':' + config.port
 let payURL = 'http://api.flowz.com/payment/payment'
 let updateUserURL = 'http://api.flowz.com/user/updateuserdetails/'
 let userDetailURL = 'http://auth.flowz.com/api/userdetails'
+const config1 = require('../../../config/default.json');
+if (process.env.x_api_token != '')
+    config1.x_api_token = process.env.x_api_token
 class Service {
   constructor (options) {
     this.options = options || {};
@@ -24,7 +27,7 @@ class Service {
   }
 
   create (data, params) {
-    var res = createFunction(data)
+    var res = createFunction(data,params)
     return Promise.resolve(res);
   }
 
@@ -60,19 +63,20 @@ var payObj = async( function (data, price) {
 })
 
 var getThisSubscription = async(function (id) {
-  var res = await (axios.get(baseURL + '/default-subscription/' + id))
+  var res = await (axios.get(baseURL + '/subscription-plans/' + id))
   return res.data
 })
 
-var createFunction = async ( function(data) {
+var createFunction = async (function(data,params) {
+  // console.log("+++++++++++ data",data)
   var thisSubscription = await (getThisSubscription(data.sub_id))
   // console.log('thisSubscription', thisSubscription)
   var paymentObj = await (payObj(data, thisSubscription.price))
   var config = {
     headers:  {
     'Content-Type': 'application/json',
-    'X-api-token':  '',
-    'authorization': ''
+    'X-api-token':  config1.x_api_token,
+    'authorization': params.query.authorization
     }
   }
   // console.log(paymentObj)
@@ -92,11 +96,29 @@ var createFunction = async ( function(data) {
     // console.log('userDetail', userDetail)
     if (userDetail != null) {
       // console.log('userDetail......', userDetail.data)
-      console.log('Valid Token! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>.')
-      var packageObj = await (makePackageObj(thisSubscription, checkout_res.id))
-      var u_id = userDetail.data._id
-      console.log('.............', packageObj)
-      var _resConfirm = await (axios.put(updateUserURL + u_id, {package: packageObj}, config))
+      if(userDetail.data.hasOwnProperty("package")){
+        var packageObj = await (makePackageObj(thisSubscription, checkout_res.id))
+        var u_id = userDetail.data._id
+        if(userDetail.data.hasOwnProperty("package_history")){
+          userDetail.data.package_history.push(userDetail.data.package)
+          console.log('Valid Token! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>.')
+          var _resConfirm = await (axios.put(updateUserURL + u_id, {package: packageObj,package_history:userDetail.data.package_history}, config))
+        }
+        else {
+          let package_history = []
+          package_history.push(userDetail.data.package)
+          console.log('Valid Token! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>.')
+          var _resConfirm = await (axios.put(updateUserURL + u_id, {package: packageObj,package_history:package_history}, config))
+        }
+      }
+      else {
+        console.log('Valid Token! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>.')
+        var packageObj = await (makePackageObj(thisSubscription, checkout_res.id))
+        var u_id = userDetail.data._id
+        // console.log('.............', packageObj)
+        var _resConfirm = await (axios.put(updateUserURL + u_id, {package: packageObj}, config))
+      }
+
       // console.log('>>>>>>>>>>>>>>>>>>>>>>>>>>>..', _resConfirm.data)
     } else {
       console.log('Not Valid Token!')
@@ -110,23 +132,37 @@ let makePackageObj = async (function (subData, trans_id) {
   var exdate = new Date()
   exdate.setDate(exdate.getDate() + subData.validity)
   var detail = []
-  for(let [inx, _service] of subData.services.entries()) {
-    var obj = {}
-    obj.service = _service.name
-    for(let [i, _route] of _service.routes.entries()) {
-      obj.routes = _route.name
-      for(let [inxx, mobj] of _route.methods.entries()) {
-        obj.method = mobj.name
-        obj.value = mobj.value
-      }
-    }
+  for(let i=0;i<subData.details.length;i++){
+    let obj = {}
+    obj.module = subData.details[i].module
+    obj.service = subData.details[i].service
+    obj.method = subData.details[i].action
+    obj.route = subData.details[i].url
+    obj.value = subData.details[i].value
+    // console.log("obj.........................",obj)
     detail.push(obj)
   }
+  // for(let [inx, _service] of subData.services.entries()) {
+  //   var obj = {}
+  //   obj.service = _service.name
+  //   for(let [i, _route] of _service.routes.entries()) {
+  //     obj.routes = _route.name
+  //     for(let [inxx, mobj] of _route.methods.entries()) {
+  //       obj.method = mobj.name
+  //       obj.value = mobj.value
+  //     }
+  //   }
+  //   detail.push(obj)
+  // }
   var package = {
     expiredOn : exdate,
     details : detail,
     sub_id : subData.id,
-    trans_id: trans_id
+    trans_id: trans_id,
+    name: subData.name,
+    price: subData.price,
+    time_unit: subData.time_unit,
+    validity: subData.validity
   }
   return package
 })

@@ -4,6 +4,8 @@ import Vue from 'vue'
 import App from './App'
 import router from './router'
 import config from '@/config'
+var VueCookie = require('vue-cookie');
+
 
 // Include and set up feathers client
 const Feathers = require('feathers/client')
@@ -26,6 +28,10 @@ Vue.use(vueFeathers, feathers)
 Vue.config.productionTip = false
 import AsyncComputed from 'vue-async-computed'
 Vue.use(AsyncComputed)
+
+// Tell Vue to use the plugin
+Vue.use(VueCookie);
+
 
 /* eslint-disable no-new */
 new Vue({
