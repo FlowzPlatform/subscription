@@ -21,7 +21,7 @@
                       <li class="list-group-item"><i class="icon-ok text-danger"></i> 27/7 support</li>
                   </ul>
                   <div class="panel-footer">
-                      <a class="btn btn-lg btn-block btn-danger" @click="checkoutFunction(item.id)">BUY NOW!</a>
+                      <a class="btn btn-lg btn-block btn-danger" @click="checkoutFunction(item.id)">SUBSCRIBE !</a>
                   </div>
               </div>
           </div>
