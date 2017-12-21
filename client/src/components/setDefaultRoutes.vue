@@ -328,21 +328,9 @@ export default {
 
                   _.forEach(response.data.data, function(data, key) {
                     console.log("data",data)
-                     for(let key in data){
-                       if(key != 'id'){
-                       console.log("key",key,"data",data[key])
-                       for(let value in data[key]){
-                         console.log("value",value,"data",data[key][value])
-                         for(let route in data[key][value]){
-                           console.log("value",route,"data",data[key][value][route])
-                           data5.push({"module":key,"service":value,"action":route,"url":data[key][value][route],"value":0})
-                         }
-                       }
-                     }
-                      //  data5.push({"module":key,})
-                     }
-
-
+                    for(let action in data.actions[0]){
+                      data5.push({"module":data.module,"service":data.service,"action":action,"url":data.actions[0][action],"value":0})
+                    }
                   })
                 // for(let i=0;i<response.data.data.length;i++){
                 //   keys.push(Object.keys(response.data.data[i])[0])
