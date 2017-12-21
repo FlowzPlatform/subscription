@@ -42,19 +42,21 @@ var modify = async(function(hook){
   console.log("***********hook",hook.data)
   console.log("***********hook",hook.params)
   let obj = {}
-  let flag = true
+  let action_obj = {}
   let id = ''
   let module = hook.data.module.toLowerCase()
   let service = hook.data.service.toLowerCase()
   console.log("++++++++++++++++++",module,service)
-  obj[module] = {}
-  obj[module][service] = {}
+  obj["module"] = module
+  obj["service"] = service
+  obj["actions"] = []
   for(let key in hook.data.actions[0]) {
     let key1 = key.toLowerCase()
     let action1 = hook.data.actions[0][key].toLowerCase()
     console.log("key1.action1",key1,action1)
-    obj[module][service][key1] = action1
+    action_obj[key1] = action1
   }
+  obj["actions"].push(action_obj)
 
   var tdata = await(hook.app.service('/register-resource').find())
 
@@ -62,21 +64,13 @@ var modify = async(function(hook){
 
   if(tdata.data.length != 0){
   for(let [i, mObj] of tdata.data.entries()) {
-    console.log(mObj.hasOwnProperty(module) ,mObj[module],mObj)
-    if(mObj.hasOwnProperty(module)){
-       if(mObj[module].hasOwnProperty(service)){
-         console.log("yes",mObj)
+    if(mObj.module == module && mObj.service == service){
          id = mObj.id
          hook.app.service('/register-resource').update(id,obj).then(result => {
              console.log("result....",result)
          });
          hook.data = []
          hook.result = {"data":"updated"}
-       }
-       else{
-          hook.data = obj
-       }
-
     }
     else{
        hook.data = obj
@@ -86,15 +80,6 @@ var modify = async(function(hook){
  else{
     hook.data = obj
  }
- // if(flag == true){
- //   console.log("true.......")
- //   hook.data = obj
- // }
- // else{
- //   console.log("false.....")
- //   hook.data = []
- //   hook.result = {"data":"updated"}
- // }
 })
 
 

@@ -38,13 +38,16 @@ module.exports = {
 var modify = async(function(hook){
   console.log("***********hook",hook.data)
   console.log("***********hook",hook.params)
-  let obj = {}
-  let id = ''
+  let obj = []
+  let id = []
+  let flag = true
   let module = hook.data.module.toLowerCase()
   console.log("module......",module)
 
-  obj["module"] = module
-  obj["roles"] = hook.data.roles
+  for(let i=0 ;i<hook.data.roles.length;i++) {
+     let role = hook.data.roles[i].toLowerCase()
+     obj.push({"module":module,"role":role})
+  }
 
   var tdata = await(hook.app.service('/register-roles').find())
   console.log("tdata....",tdata)
@@ -52,13 +55,8 @@ var modify = async(function(hook){
   if(tdata.data.length != 0){
     for(let [i, mObj] of tdata.data.entries()) {
       if(mObj["module"] == module){
-          id = mObj.id
-          hook.app.service('/register-roles').update(id,obj).then(result => {
-              console.log("result....",result)
-          });
-
-          hook.data = []
-          hook.result = {"data":"updated"}
+          id.push(mObj.id)
+          flag = false
       }
       else {
          hook.data = obj
@@ -66,6 +64,15 @@ var modify = async(function(hook){
     }
   }
   else {
+    hook.data = obj
+  }
+
+  if(flag == false){
+    for(let i=0;i<id.length;i++){
+      hook.app.service('/register-roles').remove(id[i]).then(result => {
+          console.log("result....",result)
+      });
+    }
     hook.data = obj
   }
 })
