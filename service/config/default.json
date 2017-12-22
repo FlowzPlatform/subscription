@@ -1,3 +1,4 @@
+
 {
   "host": "localhost",
   "port": 3030,
@@ -10,10 +11,13 @@
     "db": "subscription",
     "servers": [
       {
-        "host": "139.59.35.45",
-        "port": "28016"
+        "host": "localhost",
+        "port": "28015"
       }
     ]
   },
-  "x_api_token":"xxxxxxx"
+  "x_api_token":"xxxxxxx",
+  "payURL":"http://api.flowz.com/payment/payment",
+  "updateUserURL" : "http://api.flowz.com/user/updateuserdetails/",
+  "userDetailURL" : "http://auth.flowz.com/api/userdetails"
 }

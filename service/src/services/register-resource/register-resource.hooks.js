@@ -8,7 +8,8 @@ module.exports = {
   before: {
     all: [],
     find: [],
-    get: [],
+    get: [
+    ],
     create: [
       hook => modify(hook)
     ],
@@ -16,11 +17,11 @@ module.exports = {
     patch: [],
     remove: []
   },
-
   after: {
     all: [],
     find: [],
-    get: [],
+    get: [
+    ],
     create: [],
     update: [],
     patch: [],
@@ -80,6 +81,11 @@ var modify = async(function(hook){
  else{
     hook.data = obj
  }
+})
+
+var get = async(function(hook){
+  console.log("****************",hook.result)
+  console.log("&&&&&&&&&&&&&&&",hook)
 })
 
 

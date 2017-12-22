@@ -66,6 +66,8 @@
 <script>
 import defaultSubscription from '@/api/default-subscription'
 import axios from 'axios'
+import config from '@/config'
+let baseUrl = config.serverURI
 
   export default {
     name: 'subscriptionList',
@@ -86,7 +88,7 @@ import axios from 'axios'
 
 				  axios({
 									method:'get',
-									url:"http://localhost:3030/subscription-plans"
+									url:baseUrl + "/subscription-plans"
 								}).then(response => {
 									console.log("response.....",response)
 									for(let i=0;i<response.data.data.length;i++){

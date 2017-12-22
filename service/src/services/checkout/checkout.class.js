@@ -4,12 +4,13 @@ let async = require('asyncawait/async');
 let await = require('asyncawait/await');
 let rp = require('request-promise')
 let config = require('config')
-let baseURL = 'http://' + config.host + ':' + config.port
-let payURL = 'http://api.flowz.com/payment/payment'
-let updateUserURL = 'http://api.flowz.com/user/updateuserdetails/'
-let userDetailURL = 'http://auth.flowz.com/api/userdetails'
 const config1 = require('../../../config/default.json');
-if (process.env.x_api_token != '')
+let baseURL = 'http://' + config1.host + ':' + config1.port
+let payURL = config1.payURL
+let updateUserURL = config1.updateUserURL
+let userDetailURL = config1.userDetailURL
+
+if (process.env.x_api_token)
     config1.x_api_token = process.env.x_api_token
 class Service {
   constructor (options) {
@@ -68,7 +69,7 @@ var getThisSubscription = async(function (id) {
 })
 
 var createFunction = async (function(data,params) {
-  // console.log("+++++++++++ data",data)
+  // console.log("+++++++++++ params",params.query.authorization)
   var thisSubscription = await (getThisSubscription(data.sub_id))
   // console.log('thisSubscription', thisSubscription)
   var paymentObj = await (payObj(data, thisSubscription.price))

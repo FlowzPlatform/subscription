@@ -76,6 +76,8 @@
 import defaultSubscription from '@/api/default-subscription'
 import checkoutApi from '@/api/checkout'
 import axios from 'axios'
+import config from '@/config'
+let baseUrl = config.serverURI
 
 export default {
   name: 'checkout',
@@ -119,7 +121,7 @@ export default {
 
 			axios({
 							method:'post',
-							url:"http://localhost:3030/checkout",
+							url: baseUrl + "/checkout",
 							headers: {'authorization': auth_token},
 							data:sObj
 						}).then(res => {

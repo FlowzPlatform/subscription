@@ -1,0 +1,34 @@
+2017-12-22T14:45:30.458204273 0.071952s notice: Recursively removing directory /home/software/subscription/subscription/service/rethinkdb_data/tmp
+2017-12-22T14:45:30.470001907 0.083750s notice: Initializing directory /home/software/subscription/subscription/service/rethinkdb_data
+2017-12-22T14:45:30.470110208 0.083856s info: Creating a default database for your convenience. (This is because you ran 'rethinkdb' without 'create', 'serve', or '--join', and the directory '/home/software/subscription/subscription/service/rethinkdb_data' did not already exist or is empty.)
+2017-12-22T14:45:30.476198025 0.089945s notice: Running rethinkdb 2.3.5 (GCC 5.4.0)...
+2017-12-22T14:45:30.479267487 0.093015s notice: Running on Linux 4.4.0-104-generic x86_64
+2017-12-22T14:45:30.479337149 0.093082s notice: Loading data from directory /home/software/subscription/subscription/service/rethinkdb_data
+2017-12-22T14:45:30.570798860 0.184549s info: Automatically using cache size of 3790 MB
+2017-12-22T14:45:30.571647953 0.185394s notice: Listening for intracluster connections on port 29015
+2017-12-22T14:45:30.585793379 0.199539s notice: Listening for client driver connections on port 28015
+2017-12-22T14:45:30.586099607 0.199845s notice: Listening for administrative HTTP connections on port 8080
+2017-12-22T14:45:30.586105747 0.199851s notice: Listening on cluster addresses: 127.0.0.1, 127.0.1.1, ::1
+2017-12-22T14:45:30.586113108 0.199858s notice: Listening on driver addresses: 127.0.0.1, 127.0.1.1, ::1
+2017-12-22T14:45:30.586117611 0.199863s notice: Listening on http addresses: 127.0.0.1, 127.0.1.1, ::1
+2017-12-22T14:45:30.586123482 0.199869s notice: To fully expose RethinkDB on the network, bind to all addresses by running rethinkdb with the `--bind all` command line option.
+2017-12-22T14:45:30.586129868 0.199875s notice: Server ready, "OBLAP_75_rpw" 43222a0f-1439-4c8c-8ab5-488314f0189a
+2017-12-22T14:45:32.016464515 1.630211s notice: A newer version of the RethinkDB server is available: 2.3.6. You can read the changelog at <https://github.com/rethinkdb/rethinkdb/releases>.
+2017-12-22T15:02:49.060712659 1038.674458s info: Table 6496d688-2491-4411-a28a-fa37ac18b509: Starting a new Raft election for term 1.
+2017-12-22T15:02:49.063377178 1038.677123s info: Table 6496d688-2491-4411-a28a-fa37ac18b509: Added replica on this server.
+2017-12-22T15:02:49.077683419 1038.691429s info: Table 6496d688-2491-4411-a28a-fa37ac18b509: This server is Raft leader for term 1. Latest log index is 0.
+2017-12-22T15:02:49.705586742 1039.319333s info: Table e16d1170-914c-4eda-97ce-f779d958f38f: Starting a new Raft election for term 1.
+2017-12-22T15:02:49.706087583 1039.319833s info: Table e16d1170-914c-4eda-97ce-f779d958f38f: Added replica on this server.
+2017-12-22T15:02:49.719684109 1039.333430s info: Table e16d1170-914c-4eda-97ce-f779d958f38f: This server is Raft leader for term 1. Latest log index is 0.
+2017-12-22T15:02:50.341040254 1039.954786s info: Table 64e281f2-da31-44c8-b812-6cec96e815c7: Starting a new Raft election for term 1.
+2017-12-22T15:02:50.341678493 1039.955424s info: Table 64e281f2-da31-44c8-b812-6cec96e815c7: Added replica on this server.
+2017-12-22T15:02:50.350456867 1039.964203s info: Table 64e281f2-da31-44c8-b812-6cec96e815c7: This server is Raft leader for term 1. Latest log index is 0.
+2017-12-22T15:02:50.972575495 1040.586321s info: Table 5b3816d0-3d0f-44bb-8ac9-9111f7396ef1: Starting a new Raft election for term 1.
+2017-12-22T15:02:50.972918774 1040.586664s info: Table 5b3816d0-3d0f-44bb-8ac9-9111f7396ef1: Added replica on this server.
+2017-12-22T15:02:50.985123565 1040.598870s info: Table 5b3816d0-3d0f-44bb-8ac9-9111f7396ef1: This server is Raft leader for term 1. Latest log index is 0.
+2017-12-22T15:02:51.622335232 1041.236081s info: Table b8160e06-7cf4-46ef-93e8-cb1261137ec5: Starting a new Raft election for term 1.
+2017-12-22T15:02:51.623354562 1041.237100s info: Table b8160e06-7cf4-46ef-93e8-cb1261137ec5: Added replica on this server.
+2017-12-22T15:02:51.638002194 1041.251748s info: Table b8160e06-7cf4-46ef-93e8-cb1261137ec5: This server is Raft leader for term 1. Latest log index is 0.
+2017-12-22T15:02:52.271238304 1041.884984s info: Table 200c48d9-d1e5-4b05-a67b-218596fd9f9c: Starting a new Raft election for term 1.
+2017-12-22T15:02:52.272040637 1041.885786s info: Table 200c48d9-d1e5-4b05-a67b-218596fd9f9c: Added replica on this server.
+2017-12-22T15:02:52.287363875 1041.901110s info: Table 200c48d9-d1e5-4b05-a67b-218596fd9f9c: This server is Raft leader for term 1. Latest log index is 0.
