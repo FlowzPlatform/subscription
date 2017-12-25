@@ -21,7 +21,7 @@
                       <li class="list-group-item"><i class="icon-ok text-danger"></i> 27/7 support</li>
                   </ul>
                   <div class="panel-footer">
-                      <a class="btn btn-lg btn-block btn-danger" @click="checkoutFunction(item.id)">BUY NOW!</a>
+                      <a class="btn btn-lg btn-block btn-danger" @click="checkoutFunction(item.id)">SUBSCRIBE !</a>
                   </div>
               </div>
           </div>
@@ -66,6 +66,8 @@
 <script>
 import defaultSubscription from '@/api/default-subscription'
 import axios from 'axios'
+import config from '@/config'
+let baseUrl = config.serverURI
 
   export default {
     name: 'subscriptionList',
@@ -86,7 +88,7 @@ import axios from 'axios'
 
 				  axios({
 									method:'get',
-									url:"http://localhost:3030/subscription-plans"
+									url:baseUrl + "/subscription-plans"
 								}).then(response => {
 									console.log("response.....",response)
 									for(let i=0;i<response.data.data.length;i++){
