@@ -2,12 +2,12 @@
   <div>
     <div class="container">
       <div class="row add-service">
-        <div class="col-md-9"></div>
-        <div class="col-md-3">
-          <div class="col-md-8" @click="createPlan()">
+        <div class="col-xs-9"></div>
+        <div class="col-xs-3">
+          <div class="col-xs-8" @click="createPlan()">
             <h4>new plan</h4>
           </div>
-          <div class="col-md-4 main-option" @click="update()">
+          <div class="col-xs-4 main-option" @click="update()">
             <h4>update</h4>
           </div>
         </div>
@@ -16,57 +16,57 @@
     <div v-for="(plan, pIndex) in plans">
       <div class="container">
         <hr>
-        <div class="col-md-9">
+        <div class="col-xs-9" style="margin-top:10px">
           <div class="row">
-            <div class="col-md-7">
+            <div class="col-xs-7">
               <div class="row">
-                <div class="col-md-4 no-margin" align="right">
+                <div class="col-xs-4 no-margin" >
                   <h4>Plan Name:</h4>
                 </div>
-                <div class="col-md-8 no-margin">
+                <div class="col-xs-8 no-margin">
                   <h4><input type="text" class="description" v-model="plan.name" placeholder="______________________"></h4>
                 </div>
               </div>
             </div>
-            <div class="col-md-5">
+            <div class="col-xs-5">
               <div class="row">
-                <div class="col-md-4 no-margin">
+                <div class="col-xs-4 no-margin">
                   <h4>Validity: </h4>
                 </div>
-                <div class="col-md-3 no-margin" align="right">
+                <div class="col-xs-3 no-margin" >
                   <h4><input type="number" title="Validity" class="description" v-model="plan.validity" min=1 placeholder="____________________"></input></h4>
                 </div>
-                <div class="col-md-5 no-margin" align="left">
+                <div class="col-xs-5 no-margin" align="left">
                   <h4>days</h4>
                 </div>
               </div>
             </div>
           </div>
         </div>
-        <div class="col-md-3">
-          <div class="row pull-right">
-            <div class="col-md-4 no-margin" align="right">
+        <div class="col-xs-3" style="margin-top:10px">
+          <div class="row">
+            <div class="col-xs-4 no-margin" >
               <h4>Price:</h4>
             </div>
-            <div class="col-md-5 no-margin">
+            <div class="col-xs-5 no-margin">
               <div class="row no-margin">
-                <div class="col-md-2 no-margin">
+                <div class="col-xs-2 no-margin">
                   <h4>$</h4>
                 </div>
-                <div class="col-md-10 no-margin">
+                <div class="col-xs-10 no-margin">
                   <h4><input type="number" class="description" v-model="plan.price" placeholder="______________________"></input></h4>
                 </div>
               </div>
             </div>
-            <div class="col-md-3 options-main">
+            <div class="col-xs-3 options-main">
               <div class="row">
-                <div class="col-md-6" @click="deletePlan(pIndex)">
+                <div class="col-xs-6" @click="deletePlan(pIndex)">
                   <icon name="trash" scale="1.4"></icon>
                 </div>
-                <div class="col-md-6" v-if="checkOpen(pIndex)" @click="expand(pIndex)">
+                <div class="col-xs-6" v-if="checkOpen(pIndex)" @click="expand(pIndex)">
                   <icon name="arrow-up" scale="1.4"></icon>
                 </div>
-                <div class="col-md-6" v-else @click="expand(pIndex)">
+                <div class="col-xs-6" v-else @click="expand(pIndex)">
                   <icon name="arrow-down" scale="1.4"></icon>
                 </div>
               </div>
@@ -197,6 +197,8 @@ import iView from 'iview'
 import locale from 'iview/dist/locale/en-US'
 import 'iview/dist/styles/iview.css' // CSS
 Vue.use(iView, { locale })
+import config from '@/config'
+let baseUrl = config.serverURI
 
 
 import 'vue-awesome/icons'
@@ -219,7 +221,7 @@ export default {
     let self = this
     axios({
               method:'get',
-              url:"http://localhost:3030/subscription-plans"
+              url:baseUrl + "/subscription-plans"
             }).then(response => {
               console.log("response.....",response)
               for(let i=0;i<response.data.data.length;i++){
@@ -322,7 +324,7 @@ export default {
       let keys = []
       axios({
                 method:'get',
-                url:"http://localhost:3030/register-resource"
+                url: baseUrl + "/register-resource"
               }).then(response => {
                 console.log("response.....",response.data.data,response.data.data[0])
 
@@ -472,12 +474,12 @@ export default {
       // then((response) => {
       axios({
                 method:'delete',
-                url:"http://localhost:3030/subscription-plans",
+                url:baseUrl + "/subscription-plans",
               }).then(response => {
                 console.log("response...",response)
                 axios({
                           method:'post',
-                          url:"http://localhost:3030/subscription-plans",
+                          url: baseUrl +"/subscription-plans",
                           data:this.plans
                         }).then(response => {
                             console.log("response...",response)
@@ -509,6 +511,10 @@ export default {
 </script>
 
 <style>
+  .col-xs-3 {
+    padding-right: 0px;
+    padding-left: 0px;
+  }
   .service-header {
     border-bottom: solid 2px #000044;
     background-color: #000044;
@@ -545,14 +551,13 @@ export default {
     margin: 10px;
   }
 
-  h4 {
-    font-size: 2em;
-    margin: 8px;
-  }
-
   h5 {
     font-size: 1.5em;
   }
+
+  h4, .h4 {
+    font-size: 21px;
+}
 
   .options {
     padding: 3px;
@@ -681,5 +686,17 @@ export default {
 .redInput input {
   background-color: #19be6b;
   color: #fff;
+}
+
+.ivu-table-cell {
+    padding-left: 18px;
+    padding-right: 18px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: normal;
+    word-break: break-all;
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box;
+    font-size: 14px;
 }
 </style>

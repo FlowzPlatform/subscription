@@ -2,9 +2,10 @@ const rethinkdbdash = require('rethinkdbdash');
 
 module.exports = function () {
   const app = this;
-  const config = app.get('rethinkdb');
-  const r = rethinkdbdash(config);
+  const config = require('./services/config');
+  const r = rethinkdbdash(config.rethinkdb);
   const oldSetup = app.setup;
+
 
   app.set('rethinkdbClient', r);
 

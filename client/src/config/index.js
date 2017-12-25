@@ -1,3 +1,4 @@
 export default {
-  serverURI: 'http://localhost:3030'
+  serverURI: 'http://localhost:3030',
+  
 }
