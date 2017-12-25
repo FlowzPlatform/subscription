@@ -39,65 +39,151 @@ let secureService = {
     })
   }
 }
-
 module.exports.secureService = secureService
+
+/*
+  this method for validate authToken if valid then it return user details otherwise return false
+*/
+let isValidAuthToken = async (authToken) => {
+  console.log('=isValidAuthToken=call=>' + '<==')
+  let userDetail = await getUserPackage(authToken)
+  if (userDetail !== undefined && userDetail !== null) {
+    console.log('=isValidAuthToken=call with details=><==')
+    return userDetail
+  }
+  console.log('=isValidAuthToken=call end=>' + '<==')
+  return false
+}
+
+let isValidSubscriptionPack = (userDetails, mainRoute, mainMethod) => {
+  console.log('=isValidSubscriptionPack=call=><==')
+  let userPlan = userDetails.data.package.details
+  let regExpmainRoute = new RegExp('^' + mainRoute, 'i')
+  let regExpmainMethod = new RegExp('^' + mainMethod, 'i')
+  console.log('==isValidSubscriptionPack 1=>' + mainRoute + '<==>' + mainMethod + '<==')
+  let findObj = userPlan.find((o) => { return regExpmainRoute.test(o.route) && regExpmainMethod.test(o.method) })
+  console.log('=isValidSubscriptionPack=end=><==')
+  return findObj
+}
 
 module.exports.subscription = async function (req, res, next) {
   // console.log('Subscription Request:', req.headers.authorization)
-  console.log('==1=>' + (req.baseUrl + req._parsedUrl.pathname) + '<==')
-  if (req.headers.authorization !== undefined) {
-    let userDetail = await getUserPackage(req.headers.authorization)
-                            .catch((err) => {
-                              // on error from user authontication
-                              if (err) {
-                                res.redirect(401, subscriptionURL)
-                                return false
-                              }
-                            })
-    // no user detail found then redirect to login page
-    if (userDetail.data.package === undefined || userDetail.data.package.details === undefined) {
-      console.log('planExpire===>')
-      res.redirect(401, subscriptionURL)
-      return false
-    }
-
-    // console.log('==userDetail=>', userDetail.data)
-    if (userDetail.data.package !== undefined && userDetail.data.package.details !== undefined) {
-      if (isPlanExpired(userDetail.data.package.expiredOn)) {
-        console.log('planExpire===>')
-        res.redirect(403, subscriptionURL)
-        return false
-      }
-
-      let userPlan = userDetail.data.package.details
-      let mainRoute = req.baseUrl + req._parsedUrl.pathname
-      let mainMethod = req.method.replace("'", '')
-      let regExpmainRoute = new RegExp('^' + mainRoute, 'i')
-      let regExpmainMethod = new RegExp('^' + mainMethod, 'i')
-      console.log('==1=>' + mainRoute + '<==>' + mainMethod + '<==')
-      let findObj = userPlan.find((o) => { return regExpmainRoute.test(o.route) && regExpmainMethod.test(o.method) })
-      if (findObj !== undefined) {
-        // call validate method
-        // console.log('====== Find Obj :', findObj)
-        try {
-          console.log(secureService.validate.toString())
-          if (typeof secureService.validate === 'function') {
-            let isSecure = await secureService.validate(mainRoute, req, findObj, userDetail)
-            if (isSecure !== true) {
-              res.redirect(403, subscriptionURL)
-              return false
-            }
-          } else {
+  console.log('=subscription=1=>' + (req.baseUrl + req._parsedUrl.pathname) + '<==')
+  let userDetail = await isValidAuthToken(req.headers.authorization)
+  if (userDetail === false) {
+    res.redirect(401, subscriptionURL)
+    return false
+    //return next()
+  }
+  console.log('=subscription=2=>' + (req.baseUrl + req._parsedUrl.pathname) + '<==')
+  // Package details not available
+  if (userDetail.data.package === undefined || userDetail.data.package.details === undefined) {
+    console.log('planExpire===>')
+    res.redirect(401, subscriptionURL)
+    return false
+  }
+  console.log('=subscription=3=>')
+  // check plan expir or not
+  if (isPlanExpired(userDetail.data.package.expiredOn)) {
+    console.log('planExpire===>')
+    res.redirect(403, subscriptionURL)
+    return false
+  }
+  console.log('=subscription=4=>')
+  if (userDetail.data.package !== undefined && userDetail.data.package.details !== undefined) {
+    let mainRoute = req.baseUrl + req._parsedUrl.pathname
+    let mainMethod = req.method.replace("'", '')
+    console.log('=subscription=5=>')
+    let packageInfo = isValidSubscriptionPack(userDetail, mainRoute, mainMethod)
+    console.log('=subscription=6=>')
+    if (packageInfo !== false) {
+      try {
+        console.log('=subscription=7=>')
+        console.log(secureService.validate.toString())
+        if (typeof secureService.validate === 'function') {
+          console.log('=subscription=8=>')
+          let isSecure = await secureService.validate(mainRoute, req, packageInfo, userDetail)
+          console.log('=subscription=9=>',isSecure)
+          if (isSecure !== true) {
+            console.log('=subscription=10=>')
             res.redirect(403, subscriptionURL)
             return false
           }
-        } catch (e) {
+        } else {
+          console.log('=subscription=11=>')
           res.redirect(403, subscriptionURL)
           return false
         }
+      } catch (e) {
+        console.log('=subscription=12=>')
+        res.redirect(403, subscriptionURL)
+        return false
       }
     }
+    console.log('=subscription=13=>')
   }
+  console.log('=subscription=14=>')
+  next()
+}
+
+module.exports.socketSubscription = async function (authToken, packet, next) {
+  // console.log('Subscription Request:', req.headers.authorization)
+  console.log('=socketSubscription=1=>' + '<==')
+  let userDetail = await isValidAuthToken(authToken)
+  if (userDetail === false) {
+    next(new Error('invalid authToken'))
+    return false
+    //return next()
+  }
+  console.log('=socketSubscription=2=>' + '<==')
+  // Package details not available
+  if (userDetail.data.package === undefined || userDetail.data.package.details === undefined) {
+    console.log('no package avaibale===>')
+    next(new Error('no package avaibale'))
+    return false
+  }
+  console.log('=socketSubscription=3=>')
+  // check plan expir or not
+  if (isPlanExpired(userDetail.data.package.expiredOn)) {
+    console.log('planExpire===>')
+    next(new Error('your subscription plan expird'))
+    return false
+  }
+  console.log('=socketSubscription=4=>')
+  if (userDetail.data.package !== undefined && userDetail.data.package.details !== undefined) {
+    let url = packet[0].split('::')
+    let mainRoute = url[0]
+    let mainMethod = url[1]
+    console.log('=socketSubscription=5=>')
+    let packageInfo = isValidSubscriptionPack(userDetail, mainRoute, mainMethod)
+    console.log('=socketSubscription=6=>')
+    if (packageInfo !== false) {
+      try {
+        console.log('=socketSubscription=7=>')
+        console.log(secureService.validate.toString())
+        if (typeof secureService.validate === 'function') {
+          console.log('=socketSubscription=8=>')
+          let isSecure = await secureService.validate(mainRoute, packet, packageInfo, userDetail)
+          console.log('=socketSubscription=9=>')
+          if (isSecure !== true) {
+            console.log('=socketSubscription=10=>')
+            return next(new Error('Access Forbidden'))
+            return false
+          }
+        } else {
+          console.log('=socketSubscription=11=>')
+          return next(new Error('Access Forbidden'))
+          return false
+        }
+      } catch (e) {
+        console.log('=socketSubscription=12=>')
+        return next(new Error('Access Forbidden'))
+        return false
+      }
+    }
+    console.log('=socketSubscription=13=>')
+  }
+  console.log('=socketSubscription=14=>')
   next()
 }
 
@@ -175,7 +261,7 @@ async function registerToMainService (modulename, resource, actions, authorizati
       //   'authorization': authorization
       // }
     }
-    console.log("=======RP======", options)
+    // console.log("=======RP======", options)
     rp(options)
     .then(function (resourceDetails) {
       console.log(resourceDetails)
