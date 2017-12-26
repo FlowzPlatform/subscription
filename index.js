@@ -63,7 +63,7 @@ let isValidSubscriptionPack = (userDetails, mainRoute, mainMethod) => {
   console.log('==isValidSubscriptionPack 1=>' + mainRoute + '<==>' + mainMethod + '<==')
   let findObj = userPlan.find((o) => { return regExpmainRoute.test(o.route) && regExpmainMethod.test(o.method) })
   console.log('=isValidSubscriptionPack=end=><==')
-  return findObj
+  return (findObj !== undefined) ? findObj : false
 }
 
 module.exports.subscription = async function (req, res, next) {
