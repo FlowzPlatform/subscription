@@ -5,6 +5,8 @@ let await = require('asyncawait/await');
 let rp = require('request-promise')
 let config = require('config')
 const config1 = require('../../../config/default.json');
+var moment = require('moment');
+moment().format();
 let baseURL = 'http://' + config1.host + ':' + config1.port
 let payURL = config1.payURL
 let updateUserURL = config1.updateUserURL
@@ -130,8 +132,13 @@ var createFunction = async (function(data,params) {
 
 let makePackageObj = async (function (subData, trans_id) {
   // console.log('....................', subData)
-  var exdate = new Date()
-  exdate.setDate(exdate.getDate() + subData.validity)
+  var exdate = moment().add(subData.validity, 'days').format()
+  // console.log("new Date().......",exdate)
+  // var date2 =
+  // console.log("date2......",date2)
+  // console.log("subData.validity......",subData.validity)
+  // exdate.setDate(exdate.getDate() + subData.validity)
+  // console.log("exdate...........",exdate)
   var detail = []
   for(let i=0;i<subData.details.length;i++){
     let obj = {}

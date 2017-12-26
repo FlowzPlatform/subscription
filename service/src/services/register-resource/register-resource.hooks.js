@@ -6,8 +6,11 @@ let await = require('asyncawait/await');
 
 module.exports = {
   before: {
-    all: [],
-    find: [],
+    all: [
+    ],
+    find: [
+        hook => find2(hook)
+    ],
     get: [
     ],
     create: [
@@ -18,7 +21,8 @@ module.exports = {
     remove: []
   },
   after: {
-    all: [],
+    all: [
+    ],
     find: [],
     get: [
     ],
@@ -40,14 +44,14 @@ module.exports = {
 };
 
 var modify = async(function(hook){
-  console.log("***********hook",hook.data)
-  console.log("***********hook",hook.params)
+  // console.log("***********hook",hook.data)
+  // console.log("***********hook",hook.params)
   let obj = {}
   let action_obj = {}
   let id = ''
   let module = hook.data.module.toLowerCase()
   let service = hook.data.service.toLowerCase()
-  console.log("++++++++++++++++++",module,service)
+  // console.log("++++++++++++++++++",module,service)
   obj["module"] = module
   obj["service"] = service
   obj["actions"] = []
@@ -68,7 +72,7 @@ var modify = async(function(hook){
     if(mObj.module == module && mObj.service == service){
          id = mObj.id
          hook.app.service('/register-resource').update(id,obj).then(result => {
-             console.log("result....",result)
+            //  console.log("result....",result)
          });
          hook.data = []
          hook.result = {"data":"updated"}
@@ -83,10 +87,39 @@ var modify = async(function(hook){
  }
 })
 
-var get = async(function(hook){
-  console.log("****************",hook.result)
-  console.log("&&&&&&&&&&&&&&&",hook)
+var find2 = async(function(hook){
+  if(hook.params.query != undefined){
+    // console.log("called....")
+  if(hook.params.query.method  && hook.params.query.route && hook.params.query.module){
+    let p_module1 = hook.params.query.module.toLowerCase()
+    let p_method1 = hook.params.query.method.toLowerCase()
+    let p_route1 = hook.params.query.route.toLowerCase()
+      // console.log("&&&&&&&&&&&&&&&",hook.params.query)
+      var tdata1 = await(hook.app.service('/register-resource').find())
+      // console.log('tdata', tdata1)
+      if(tdata1.data.length != 0){
+        for(let [i, mObj] of tdata1.data.entries()) {
+            // console.log("mObj.actions",mObj.actions)
+            if(mObj.module == p_module1){
+              for(let key in mObj.actions[0])
+                {
+                  // console.log(key,mObj.actions[0][key])
+                  if(p_method1 == key && p_route1 == mObj.actions[0][key]){
+                    hook.result = mObj
+                  }
+                }
+            }
+        }
+
+      }
+  }
+}
+
+
 })
+
+
+
 
 
 // function modify (hook) {

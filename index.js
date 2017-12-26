@@ -63,7 +63,7 @@ let isValidSubscriptionPack = (userDetails, mainRoute, mainMethod) => {
   console.log('==isValidSubscriptionPack 1=>' + mainRoute + '<==>' + mainMethod + '<==')
   let findObj = userPlan.find((o) => { return regExpmainRoute.test(o.route) && regExpmainMethod.test(o.method) })
   console.log('=isValidSubscriptionPack=end=><==')
-  return findObj
+  return (findObj !== undefined) ? findObj : false
 }
 
 module.exports.subscription = async function (req, res, next) {
@@ -306,3 +306,31 @@ async function registerToMainRole (modulename, roles, authorization) {
 // console.log("=============2111=======")
 // // registeredAppModules()
 // console.log("=============2333=======")
+
+module.exports.isAccess = (moduleName, route, method) => {
+  return new Promise(async (resolve, reject) => {
+    registerModuleURL
+  })
+}
+
+async function findResource (moduleName, route, method, authorization) {
+  return new Promise((resolve, reject) => {
+    var options = {
+      method: 'get',
+      uri: registerModuleURL + '?method=' + method + '&route=' + route + '&module=' + moduleName
+      // headers: {
+      //   'authorization': authorization
+      // }
+    }
+    console.log("=======RP==find====", options)
+    rp(options)
+    .then(function (resourceDetails) {
+      resolve(resourceDetails)
+    })
+    .catch(function (err) {
+      if (err) {
+      }
+      resolve(null)
+    })
+  })
+}
