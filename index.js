@@ -306,3 +306,9 @@ async function registerToMainRole (modulename, roles, authorization) {
 // console.log("=============2111=======")
 // // registeredAppModules()
 // console.log("=============2333=======")
+
+let isAccess = (moduleName, route, method) => {
+  return new Promise(async (resolve, reject) => {
+    
+  })
+}
