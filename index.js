@@ -307,8 +307,30 @@ async function registerToMainRole (modulename, roles, authorization) {
 // // registeredAppModules()
 // console.log("=============2333=======")
 
-let isAccess = (moduleName, route, method) => {
+module.exports.isAccess = (moduleName, route, method) => {
   return new Promise(async (resolve, reject) => {
-    
+    registerModuleURL
+  })
+}
+
+async function findResource (moduleName, route, method, authorization) {
+  return new Promise((resolve, reject) => {
+    var options = {
+      method: 'get',
+      uri: registerModuleURL + '?method=' + method + '&route=' + route + '&module=' + moduleName
+      // headers: {
+      //   'authorization': authorization
+      // }
+    }
+    console.log("=======RP==find====", options)
+    rp(options)
+    .then(function (resourceDetails) {
+      resolve(resourceDetails)
+    })
+    .catch(function (err) {
+      if (err) {
+      }
+      resolve(null)
+    })
   })
 }
