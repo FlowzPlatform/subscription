@@ -84,7 +84,7 @@ var createFunction = async (function(data,params) {
   }
   // console.log(paymentObj)
   var checkout_res = await (axios.post(payURL, paymentObj, config).then(res => {
-        // console.log('payment_response....', res.data)
+        console.log('payment_response....', res.data)
         return res.data
       })
       .catch(err => {
@@ -138,7 +138,7 @@ let makePackageObj = async (function (subData, trans_id) {
   // console.log("date2......",date2)
   // console.log("subData.validity......",subData.validity)
   // exdate.setDate(exdate.getDate() + subData.validity)
-  // console.log("exdate...........",exdate)
+  console.log("exdate...........",exdate)
   var detail = []
   for(let i=0;i<subData.details.length;i++){
     let obj = {}
