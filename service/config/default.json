@@ -17,7 +17,7 @@
     ]
   },
   "x_api_token":"xxxxxxx",
-  "payURL":"http://api.flowz.com/payment/payment",
-  "updateUserURL" : "http://api.flowz.com/user/updateuserdetails/",
-  "userDetailURL" : "http://auth.flowz.com/api/userdetails"
+  "pay_url":"xxxxxxx",
+  "update_user_url" : "xxxxxx",
+  "user_detail_url" : "xxxxxx"
 }

@@ -8,12 +8,16 @@ const config1 = require('../../../config/default.json');
 var moment = require('moment');
 moment().format();
 let baseURL = 'http://' + config1.host + ':' + config1.port
-let payURL = config1.payURL
-let updateUserURL = config1.updateUserURL
-let userDetailURL = config1.userDetailURL
 
 if (process.env.x_api_token)
     config1.x_api_token = process.env.x_api_token
+if (process.env.pay_url)
+    config1.pay_url = process.env.pay_url
+if (process.env.update_user_url)
+    config1.update_user_url = process.env.update_user_url
+if (process.env.user_detail_url)
+    config1.user_detail_url = process.env.user_detail_url
+
 class Service {
   constructor (options) {
     this.options = options || {};
@@ -83,8 +87,8 @@ var createFunction = async (function(data,params) {
     }
   }
   // console.log(paymentObj)
-  var checkout_res = await (axios.post(payURL, paymentObj, config).then(res => {
-        // console.log('payment_response....', res.data)
+  var checkout_res = await (axios.post(config1.pay_url, paymentObj, config).then(res => {
+        console.log('payment_response....', res.data)
         return res.data
       })
       .catch(err => {
@@ -105,13 +109,13 @@ var createFunction = async (function(data,params) {
         if(userDetail.data.hasOwnProperty("package_history")){
           userDetail.data.package_history.push(userDetail.data.package)
           console.log('Valid Token! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>.')
-          var _resConfirm = await (axios.put(updateUserURL + u_id, {package: packageObj,package_history:userDetail.data.package_history}, config))
+          var _resConfirm = await (axios.put(config1.update_user_url + u_id, {package: packageObj,package_history:userDetail.data.package_history}, config))
         }
         else {
           let package_history = []
           package_history.push(userDetail.data.package)
           console.log('Valid Token! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>.')
-          var _resConfirm = await (axios.put(updateUserURL + u_id, {package: packageObj,package_history:package_history}, config))
+          var _resConfirm = await (axios.put(config1.update_user_url + u_id, {package: packageObj,package_history:package_history}, config))
         }
       }
       else {
@@ -119,7 +123,7 @@ var createFunction = async (function(data,params) {
         var packageObj = await (makePackageObj(thisSubscription, checkout_res.id))
         var u_id = userDetail.data._id
         // console.log('.............', packageObj)
-        var _resConfirm = await (axios.put(updateUserURL + u_id, {package: packageObj}, config))
+        var _resConfirm = await (axios.put(config1.update_user_url + u_id, {package: packageObj}, config))
       }
 
       // console.log('>>>>>>>>>>>>>>>>>>>>>>>>>>>..', _resConfirm.data)
@@ -138,7 +142,7 @@ let makePackageObj = async (function (subData, trans_id) {
   // console.log("date2......",date2)
   // console.log("subData.validity......",subData.validity)
   // exdate.setDate(exdate.getDate() + subData.validity)
-  // console.log("exdate...........",exdate)
+  console.log("exdate...........",exdate)
   var detail = []
   for(let i=0;i<subData.details.length;i++){
     let obj = {}
@@ -178,7 +182,7 @@ let makePackageObj = async (function (subData, trans_id) {
 let getUserPackage = async function (authorization) {
   return new Promise((resolve, reject) => {
     var options = {
-      uri: userDetailURL,
+      uri: config1.user_detail_url,
       headers: {
         'authorization': authorization
       }
