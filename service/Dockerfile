@@ -1,6 +1,9 @@
 
 #FROM node:6.11.0-slim
-FROM node:8.1.2
+#FROM mhart/alpine-node:8
+FROM node:8
+RUN yarn global add npm
+RUN npm --version
 MAINTAINER flowz <dm@officebrain.com>
 ADD . /usr/src/app/server
 
