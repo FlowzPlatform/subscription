@@ -20,7 +20,7 @@ else
   }
 fi
 
-SERVICE_ID=`curl -u ""$RANCHER_USER":"$RANCHER_PASS"" -X GET -H 'Accept: application/json' -H 'Content-Type: application/json' "http://rancher.flowz.com:8080/v2-beta/projects/$ENV_ID/services?name=subscription_backend_service_flowz" | jq '.data[].id' | tr -d '"'`
+SERVICE_ID=`curl -u ""$RANCHER_USER":"$RANCHER_PASS"" -X GET -H 'Accept: application/json' -H 'Content-Type: application/json' "http://rancher.flowz.com:8080/v2-beta/projects/$ENV_ID/services?name=subscription-backend-service-flowz" | jq '.data[].id' | tr -d '"'`
 echo $SERVICE_ID
 
 echo "waiting for service to upgrade "
