@@ -5,6 +5,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+
 # Runtime data
 pids
 *.pid
@@ -59,3 +60,5 @@ typings/
 
 service/node_modules/
 client/node_modules/
+service/package-lock.json
+client/package-lock.jsons

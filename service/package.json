@@ -43,6 +43,7 @@
     "feathers-rethinkdb": "^0.4.3",
     "feathers-socketio": "^2.0.1",
     "helmet": "^3.9.0",
+    "lodash": "^4.17.4",
     "moment": "^2.20.1",
     "mongodb": "^2.2.33",
     "rethinkdbdash": "^2.3.31",
