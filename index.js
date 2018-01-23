@@ -1,7 +1,7 @@
 let rp = require('request-promise')
 let defaultConfig = {
   'subscriptionURL': '/subscriptionlist',
-  'userDetailURL': 'http://auth.flowz.com/api/userdetails',
+  'userDetailURL': 'http://auth.flowzcluster.tk/api/userdetails',
   'registerModuleURL': 'http://localhost:3030/register-resource',
   'registerRoleURL': 'http://localhost:3030/register-roles'
 }
@@ -24,6 +24,8 @@ if (process.env['registerRoleURL'] !== undefined && process.env['registerRoleURL
   registerRoleURL = process.env['registerRoleURL']
 }
 
+let userArr = []
+console.log(userArr)
 let moduleResource = {
   'moduleName': '',
   'registerAppModule': '',
@@ -45,14 +47,16 @@ module.exports.secureService = secureService
   this method for validate authToken if valid then it return user details otherwise return false
 */
 let isValidAuthToken = async (authToken) => {
-  console.log('=isValidAuthToken=call=>' + '<==')
-  let userDetail = await getUserPackage(authToken)
-  if (userDetail !== undefined && userDetail !== null) {
-    console.log('=isValidAuthToken=call with details=><==')
-    return userDetail
-  }
-  console.log('=isValidAuthToken=call end=>' + '<==')
-  return false
+  return new Promise(async (resolve, reject) => {
+    console.log('=isValidAuthToken=call=>' + '<==')
+    let userDetail = await getUserPackage(authToken)
+    if (userDetail !== undefined && userDetail !== null) {
+      console.log('=isValidAuthToken=call with details=><==')
+      resolve(userDetail)
+    }
+    console.log('=isValidAuthToken=call end=>' + '<==')
+    resolve(false)
+  })
 }
 
 let isValidSubscriptionPack = (userDetails, mainRoute, mainMethod) => {
@@ -189,8 +193,6 @@ module.exports.socketSubscription = async function (authToken, packet, next) {
 
 let isPlanExpired = (expiryDate) => {
   let expiryDateObj = new Date((new Date(expiryDate)))
-  // console.log('current Time==>', (new Date()).toGMTString())
-  // console.log('expiryDateObj==>', expiryDateObj)
   if (expiryDateObj < new Date((new Date()).toGMTString())) {
     return true
   }
@@ -199,6 +201,9 @@ let isPlanExpired = (expiryDate) => {
 
 let getUserPackage = async function (authorization) {
   return new Promise((resolve, reject) => {
+    // if (userArr[authorization] !== undefined) {
+    //   resolve(userArr[authorization])
+    // }
     var options = {
       uri: userDetailURL,
       headers: {
@@ -224,24 +229,24 @@ async function registeredAppModulesRole () {
     console.log('Please enter module name')
     process.exit()
   }
-  console.log('==================moduleName========', moduleResource.registerAppModule)
-  if (Object.keys(moduleResource.registerAppModule).length === 0) {
-    console.log('Please register your modules in "registerAppModule"')
-    process.exit()
-  }
-
-  for(let resourceName in moduleResource.registerAppModule) {
-    let regiserData = await registerToMainService(moduleResource.moduleName, resourceName, moduleResource.registerAppModule[resourceName])
-    console.log('==============registerData=====', regiserData)
-  }
-
-  console.log('==================moduleName========', moduleResource.appRoles)
-  if (moduleResource.appRoles === undefined || moduleResource.appRoles.length === 0) {
-    console.log('Please register your modules in "registerAppModule"')
-    process.exit()
-  }
-  let regiserData = await registerToMainRole(moduleResource.moduleName, moduleResource.appRoles)
-  console.log('==============registerRole Data=====', regiserData)
+  // console.log('==================moduleName========', moduleResource.registerAppModule)
+  // if (Object.keys(moduleResource.registerAppModule).length === 0) {
+  //   console.log('Please register your modules in "registerAppModule"')
+  //   process.exit()
+  // }
+  //
+  // for(let resourceName in moduleResource.registerAppModule) {
+  //   let regiserData = await registerToMainService(moduleResource.moduleName, resourceName, moduleResource.registerAppModule[resourceName])
+  //   console.log('==============registerData=====', regiserData)
+  // }
+  //
+  // console.log('==================moduleName========', moduleResource.appRoles)
+  // if (moduleResource.appRoles === undefined || moduleResource.appRoles.length === 0) {
+  //   console.log('Please register your modules in "registerAppModule"')
+  //   process.exit()
+  // }
+  // let regiserData = await registerToMainRole(moduleResource.moduleName, moduleResource.appRoles)
+  // console.log('==============registerRole Data=====', regiserData)
 }
 
 module.exports.registeredAppModulesRole = registeredAppModulesRole
@@ -334,3 +339,119 @@ async function findResource (moduleName, route, method, authorization) {
     })
   })
 }
+
+// =============================feather Subscription=========================================
+let commonActionValidation = async (context) => {
+      // console.log('==================expiryDate==============',context.params.userPackageDetails)
+  if (context.params.userPackageDetails !== undefined) {
+    let isPlanExpired = (expiryDate) => {
+      let expiryDateObj = new Date(expiryDate)
+      if (expiryDateObj < new Date((new Date()).toGMTString())) {
+        return true
+      }
+      return false
+    }
+    let userPackageDetails = context.params.userPackageDetails
+    // console.log('==================expiryDate==',new Date((new Date(userPackageDetails.package.expiredOn))),'=====',new Date((new Date()).toGMTString()))
+    let serviceName = context.service.options.name
+    let moduleName = context.params.moduleName
+    if (userPackageDetails.package === undefined ||
+      userPackageDetails.package.details === undefined ||
+      isPlanExpired(userPackageDetails.package.expiredOn) === true
+    ) {
+      context.result = {status: 403, message: 'Subscription package expired'}
+    } else {
+      if (userPackageDetails.package.details[moduleName] !== undefined &&
+        userPackageDetails.package.details[moduleName][serviceName] !== undefined &&
+        userPackageDetails.package.details[moduleName][serviceName][context.method] !== undefined
+      ) {
+        let data = await context.service.find({
+          query: {userId: userPackageDetails._id}
+        })
+        // console.log(context.path,'==========',userPackageDetails.package.details, '====', data)
+        if (data.total !== undefined &&
+          data.total > userPackageDetails.package.details[moduleName][serviceName][context.method]) {
+          context.result = {status: 403, message: 'Access denied'}
+        }
+      }
+    }
+  }
+  return context
+}
+// find: get: create: update: patch: remove:
+let actionValidation = {
+  'create': commonActionValidation,
+  'remove': commonActionValidation
+  // "remove": () => {},
+}
+
+// =========================================================================================
+module.exports.featherSubscription = async function (req, res, next) {
+  // console.log('Subscription Request:', req)
+  if (req.headers.authorization !== undefined) {
+    if (userArr[req.headers.authorization] !== undefined) {
+      req.feathers.userPackageDetails = userArr[req.headers.authorization]
+      req.feathers.moduleName = moduleResource.moduleName
+      return next()
+    }
+    let userDetail = await isValidAuthToken(req.headers.authorization)
+    if (userDetail !== false) {
+      userArr[req.headers.authorization] = userDetail.data
+      req.feathers.userPackageDetails = userDetail.data
+      req.feathers.moduleName = moduleResource.moduleName
+      return next()
+    }
+    // if (userDetail === false) {
+    //   res.redirect(401, subscriptionURL)
+    //   return false
+    //   // return next()
+    // }
+    // // console.log('=subscription=2=>' + (req.baseUrl + req._parsedUrl.pathname) + '<==')
+    // // Package details not available
+    // if (userDetail.data.package === undefined || userDetail.data.package.details === undefined) {
+    //   // console.log('planExpire===>')
+    //   res.redirect(401, subscriptionURL)
+    //   return false
+    // }
+    // // console.log('=subscription=3=>')
+    // // check plan expir or not
+    // if (isPlanExpired(userDetail.data.package.expiredOn)) {
+    //   // console.log('planExpire===>')
+    //   res.redirect(403, subscriptionURL)
+    //   return false
+    // }
+    // // console.log('=subscription=4=>')
+    // if (userDetail.data.package !== undefined && userDetail.data.package.details !== undefined) {
+    //   userArr[req.headers.authorization] = userDetail
+    //   req.feathers.userPackageDetails = userDetail.data
+    //   req.feathers.moduleName = moduleResource.moduleName
+    // }
+  }
+  next()
+}
+
+let registerDynamicHooks = (appObj, registerModules) => {
+  // service available
+  if (Object.keys(registerModules).length > 0) {
+    for (let valIdx in registerModules) {
+      // action available
+      if (registerModules[valIdx].length > 0) {
+        registerModules[valIdx].forEach((actionVal) => {
+          // console.log("======", valIdx, "=======", actionVal,"=======",actionValidation[actionVal])
+          if (appObj.service(valIdx) !== undefined && actionValidation[actionVal] !== undefined && typeof actionValidation[actionVal] === 'function') {
+            let objHook = {
+              before: {
+                [actionVal]: actionValidation[actionVal]
+              }
+            }
+            appObj.service(valIdx).hooks(objHook)
+          }
+        })
+      }
+    }
+  }
+}
+
+module.exports.commonActionValidation = commonActionValidation
+module.exports.actionValidation = actionValidation
+module.exports.registerDynamicHooks = registerDynamicHooks

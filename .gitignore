@@ -36,6 +36,7 @@ build/Release
 # Dependency directories
 node_modules/
 jspm_packages/
+rethinkdb_data/
 
 # Typescript v1 declaration files
 typings/
@@ -60,5 +61,3 @@ typings/
 
 service/node_modules/
 client/node_modules/
-service/package-lock.json
-client/package-lock.jsons
