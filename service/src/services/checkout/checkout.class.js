@@ -1,5 +1,6 @@
 /* eslint-disable no-unused-vars */
 var axios = require('axios')
+let _ = require('lodash')
 let async = require('asyncawait/async');
 let await = require('asyncawait/await');
 let rp = require('request-promise')
@@ -88,7 +89,7 @@ var createFunction = async (function(data,params) {
   }
   // console.log(paymentObj)
   var checkout_res = await (axios.post(config1.pay_url, paymentObj, config).then(res => {
-        console.log('payment_response....', res.data)
+        // console.log('payment_response....', res.data)
         return res.data
       })
       .catch(err => {
@@ -100,27 +101,27 @@ var createFunction = async (function(data,params) {
   } else {
     console.log('payment Successfully Done!')
     let userDetail = await (getUserPackage(config.headers.authorization))
-    // console.log('userDetail', userDetail)
+    //console.log('userDetail', userDetail)
     if (userDetail != null) {
       // console.log('userDetail......', userDetail.data)
       if(userDetail.data.hasOwnProperty("package")){
-        var packageObj = await (makePackageObj(thisSubscription, checkout_res.id))
+        var packageObj = await (makePackageObj(thisSubscription, checkout_res.id, userDetail.data.package))
         var u_id = userDetail.data._id
         if(userDetail.data.hasOwnProperty("package_history")){
           userDetail.data.package_history.push(userDetail.data.package)
-          console.log('Valid Token! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>.')
+          console.log('Valid Token!')
           var _resConfirm = await (axios.put(config1.update_user_url + u_id, {package: packageObj,package_history:userDetail.data.package_history}, config))
         }
         else {
           let package_history = []
           package_history.push(userDetail.data.package)
-          console.log('Valid Token! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>.')
+          console.log('Valid Token!')
           var _resConfirm = await (axios.put(config1.update_user_url + u_id, {package: packageObj,package_history:package_history}, config))
         }
       }
       else {
-        console.log('Valid Token! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>.')
-        var packageObj = await (makePackageObj(thisSubscription, checkout_res.id))
+        console.log('Valid Token!')
+        var packageObj = await (makePackageObj(thisSubscription, checkout_res.id, null))
         var u_id = userDetail.data._id
         // console.log('.............', packageObj)
         var _resConfirm = await (axios.put(config1.update_user_url + u_id, {package: packageObj}, config))
@@ -134,38 +135,43 @@ var createFunction = async (function(data,params) {
   }
 })
 
-let makePackageObj = async (function (subData, trans_id) {
+let makePackageObj = async (function (subData, trans_id, subscribed) {
   // console.log('....................', subData)
-  var exdate = moment().add(subData.validity, 'days').format()
-  // console.log("new Date().......",exdate)
-  // var date2 =
-  // console.log("date2......",date2)
-  // console.log("subData.validity......",subData.validity)
-  // exdate.setDate(exdate.getDate() + subData.validity)
-  console.log("exdate...........",exdate)
-  var detail = []
-  for(let i=0;i<subData.details.length;i++){
-    let obj = {}
-    obj.module = subData.details[i].module
-    obj.service = subData.details[i].service
-    obj.method = subData.details[i].action
-    obj.route = subData.details[i].url
-    obj.value = subData.details[i].value
-    // console.log("obj.........................",obj)
-    detail.push(obj)
+  // subscribed.expiredOn == moment().format()
+  var exdate
+  // console.log(subscribed.expiredOn, moment(subscribed.expiredOn).diff(moment().format(), 'days'))
+  if(moment(subscribed.expiredOn).diff(moment().format(), 'days') <= 0) {
+    exdate = moment().add(subData.validity, 'days').format()
+  } else {
+    exdate = moment(subscribed.expiredOn).add(subData.validity, 'days').format()    
   }
-  // for(let [inx, _service] of subData.services.entries()) {
-  //   var obj = {}
-  //   obj.service = _service.name
-  //   for(let [i, _route] of _service.routes.entries()) {
-  //     obj.routes = _route.name
-  //     for(let [inxx, mobj] of _route.methods.entries()) {
-  //       obj.method = mobj.name
-  //       obj.value = mobj.value
-  //     }
-  //   }
-  //   detail.push(obj)
-  // }
+  let newExDate
+  // console.log("exdate :",exdate)
+  var detail = {}
+  let module = _.groupBy(subData.details, "module")
+  Object.keys(module).forEach(function(key) {
+    let service = _.groupBy(module[key], "service")
+    for (let i = 0; i < module[key].length; i++) {
+      detail[module[key][i].module] = {}
+      Object.keys(service).forEach(function(k) {
+        detail[module[key][i].module][k] = {}
+        for (let j = 0; j < service[k].length; j++) {
+          if (service[k][j].value != 0 || service[k][j].value != '') {
+            let actionVal = parseInt(service[k][j].value)
+            // console.log('1 = ', subscribed.details[module[key][i].module], ' 2 = ', subscribed.details[module[key][i].module][k], '3 = ', subscribed.details[module[key][i].module][k][service[k][j].action])
+            if (subscribed.details[module[key][i].module] && subscribed.details[module[key][i].module][k] && subscribed.details[module[key][i].module][k][service[k][j].action]) {
+              actionVal += parseInt(subscribed.details[module[key][i].module][k][service[k][j].action])
+            }
+            detail[module[key][i].module][k][service[k][j].action] = actionVal
+          }
+        }
+        if (Object.keys(detail[module[key][i].module][k]).length < 1) {
+        	delete detail[module[key][i].module][k]
+        }
+      })
+    }
+  })
+
   var package = {
     expiredOn : exdate,
     details : detail,
@@ -176,6 +182,7 @@ let makePackageObj = async (function (subData, trans_id) {
     time_unit: subData.time_unit,
     validity: subData.validity
   }
+  // console.log('==>', JSON.stringify(package))
   return package
 })
 
