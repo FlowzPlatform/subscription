@@ -126,6 +126,16 @@ var createFunction = async (function(data,params) {
           .then(res => {
             console.log('User ',  u_id, ' has subscribed  package successfully..!')
           })
+          .catch(err => {
+            console.log("Error : ", err)
+          })
+          axios.post(config1.api_url + 'reverse-subscription',{"subscriptionId": res.data.id})
+          .then(res => {
+            console.log('subscriptionId : ', res.data.subscriptionId)
+          })
+          .catch(err => {
+            console.log("Error : ", err)
+          })
         })
         .catch(err => {
           console.log("Error : ", err)
@@ -144,6 +154,16 @@ var createFunction = async (function(data,params) {
           axios.put(config1.update_user_url + u_id, {"package":userDetail.data.package}, config)
           .then(res => {
             console.log('User ',  u_id, ' has subscribed  package successfully..!')
+          })
+          .catch(err => {
+            console.log("Error : ", err)
+          })
+          axios.post(config1.api_url + 'reverse-subscription',{"subscriptionId": res.data.id})
+          .then(res => {
+            console.log('subscriptionId : ', res.data.subscriptionId)
+          })
+          .catch(err => {
+            console.log("Error : ", err)
           })
         })
         .catch(err => {
