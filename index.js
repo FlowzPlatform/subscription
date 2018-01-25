@@ -25,7 +25,7 @@ if (process.env['registerRoleURL'] !== undefined && process.env['registerRoleURL
 }
 
 let userArr = []
-console.log(userArr)
+// console.log(userArr)
 let moduleResource = {
   'moduleName': '',
   'registerAppModule': '',
@@ -77,7 +77,6 @@ module.exports.subscription = async function (req, res, next) {
   if (userDetail === false) {
     res.redirect(401, subscriptionURL)
     return false
-    //return next()
   }
   console.log('=subscription=2=>' + (req.baseUrl + req._parsedUrl.pathname) + '<==')
   // Package details not available
@@ -107,7 +106,7 @@ module.exports.subscription = async function (req, res, next) {
         if (typeof secureService.validate === 'function') {
           console.log('=subscription=8=>')
           let isSecure = await secureService.validate(mainRoute, req, packageInfo, userDetail)
-          console.log('=subscription=9=>',isSecure)
+          console.log('=subscription=9=>', isSecure)
           if (isSecure !== true) {
             console.log('=subscription=10=>')
             res.redirect(403, subscriptionURL)
@@ -137,7 +136,6 @@ module.exports.socketSubscription = async function (authToken, packet, next) {
   if (userDetail === false) {
     next(new Error('invalid authToken'))
     return false
-    //return next()
   }
   console.log('=socketSubscription=2=>' + '<==')
   // Package details not available
@@ -172,17 +170,14 @@ module.exports.socketSubscription = async function (authToken, packet, next) {
           if (isSecure !== true) {
             console.log('=socketSubscription=10=>')
             return next(new Error('Access Forbidden'))
-            return false
           }
         } else {
           console.log('=socketSubscription=11=>')
           return next(new Error('Access Forbidden'))
-          return false
         }
       } catch (e) {
         console.log('=socketSubscription=12=>')
         return next(new Error('Access Forbidden'))
-        return false
       }
     }
     console.log('=socketSubscription=13=>')
@@ -224,29 +219,34 @@ let getUserPackage = async function (authorization) {
 }
 
 async function registeredAppModulesRole () {
-  console.log('==================moduleName========', moduleResource.moduleName)
+  // console.log('==================moduleName========', moduleResource.moduleName)
   if (moduleResource.moduleName === '') {
     console.log('Please enter module name')
     process.exit()
   }
   // console.log('==================moduleName========', moduleResource.registerAppModule)
-  // if (Object.keys(moduleResource.registerAppModule).length === 0) {
-  //   console.log('Please register your modules in "registerAppModule"')
-  //   process.exit()
-  // }
-  //
-  // for(let resourceName in moduleResource.registerAppModule) {
-  //   let regiserData = await registerToMainService(moduleResource.moduleName, resourceName, moduleResource.registerAppModule[resourceName])
-  //   console.log('==============registerData=====', regiserData)
-  // }
-  //
-  // console.log('==================moduleName========', moduleResource.appRoles)
-  // if (moduleResource.appRoles === undefined || moduleResource.appRoles.length === 0) {
-  //   console.log('Please register your modules in "registerAppModule"')
-  //   process.exit()
-  // }
-  // let regiserData = await registerToMainRole(moduleResource.moduleName, moduleResource.appRoles)
-  // console.log('==============registerRole Data=====', regiserData)
+  if (Object.keys(moduleResource.registerAppModule).length === 0) {
+    console.log('Please register your modules in "registerAppModule"')
+    process.exit()
+  }
+  for (let resourceName in moduleResource.registerAppModule) {
+    let newActionValue = {}
+    let actionValue = moduleResource.registerAppModule[resourceName]
+    for (let actionKey in actionValue) {
+      if (typeof parseInt(actionKey) === 'number') {
+        newActionValue[actionValue[actionKey]] = actionValue[actionKey]
+      } else {
+        newActionValue[actionKey] = actionValue[actionKey]
+      }
+    }
+    await registerToMainService(moduleResource.moduleName, resourceName, newActionValue)
+  }
+
+  if (moduleResource.appRoles === undefined || moduleResource.appRoles.length === 0) {
+    console.log('Please register your role in "registerAppModule"')
+    process.exit()
+  }
+  await registerToMainRole(moduleResource.moduleName, moduleResource.appRoles)
 }
 
 module.exports.registeredAppModulesRole = registeredAppModulesRole
@@ -271,7 +271,6 @@ async function registerToMainService (modulename, resource, actions, authorizati
     .then(function (resourceDetails) {
       console.log(resourceDetails)
       resolve(resourceDetails)
-
     })
     .catch(function (err) {
       console.log(err)
@@ -342,41 +341,47 @@ async function findResource (moduleName, route, method, authorization) {
 
 // =============================feather Subscription=========================================
 let commonActionValidation = async (context) => {
-      // console.log('==================expiryDate==============',context.params.userPackageDetails)
-  if (context.params.userPackageDetails !== undefined) {
-    let isPlanExpired = (expiryDate) => {
-      let expiryDateObj = new Date(expiryDate)
-      if (expiryDateObj < new Date((new Date()).toGMTString())) {
-        return true
+  // console.log('==================expiryDate==============',context.params.userPackageDetails)
+  try {
+    if (context.params.userPackageDetails !== undefined) {
+      let isPlanExpired = (expiryDate) => {
+        let expiryDateObj = new Date(expiryDate)
+        if (expiryDateObj < new Date((new Date()).toGMTString())) {
+          return true
+        }
+        return false
       }
-      return false
-    }
-    let userPackageDetails = context.params.userPackageDetails
-    // console.log('==================expiryDate==',new Date((new Date(userPackageDetails.package.expiredOn))),'=====',new Date((new Date()).toGMTString()))
-    let serviceName = context.service.options.name
-    let moduleName = context.params.moduleName
-    if (userPackageDetails.package === undefined ||
-      userPackageDetails.package.details === undefined ||
-      isPlanExpired(userPackageDetails.package.expiredOn) === true
-    ) {
-      context.result = {status: 403, message: 'Subscription package expired'}
-    } else {
-      if (userPackageDetails.package.details[moduleName] !== undefined &&
-        userPackageDetails.package.details[moduleName][serviceName] !== undefined &&
-        userPackageDetails.package.details[moduleName][serviceName][context.method] !== undefined
+      let userPackageDetails = context.params.userPackageDetails
+      // console.log('==================expiryDate==',new Date((new Date(userPackageDetails.package.expiredOn))),'=====',new Date((new Date()).toGMTString()))
+      let serviceName = context.service.options.name
+      let moduleName = context.params.moduleName
+      if (userPackageDetails.package === undefined ||
+        userPackageDetails.package.details === undefined ||
+        isPlanExpired(userPackageDetails.package.expiredOn) === true
       ) {
-        let data = await context.service.find({
-          query: {userId: userPackageDetails._id}
-        })
-        // console.log(context.path,'==========',userPackageDetails.package.details, '====', data)
-        if (data.total !== undefined &&
-          data.total > userPackageDetails.package.details[moduleName][serviceName][context.method]) {
-          context.result = {status: 403, message: 'Access denied'}
+        context.result = {status: 403, message: 'subscription package expired'}
+      } else {
+        if (userPackageDetails.package.details[moduleName] !== undefined &&
+          userPackageDetails.package.details[moduleName][serviceName] !== undefined &&
+          userPackageDetails.package.details[moduleName][serviceName][context.method] !== undefined
+        ) {
+          let data = await context.service.find({
+            query: {userId: userPackageDetails._id}
+          })
+          // console.log(context.path,'==========',userPackageDetails.package.details, '====', data)
+          if (data.total !== undefined &&
+            data.total > userPackageDetails.package.details[moduleName][serviceName][context.method]) {
+            context.result = {status: 403, message: 'Access denied'}
+          } else {
+            return context
+          }
         }
       }
     }
+    context.result = {status: 403, message: 'Access denied'}
+  } catch (e) {
+    context.result = {status: 403, message: e}
   }
-  return context
 }
 // find: get: create: update: patch: remove:
 let actionValidation = {
