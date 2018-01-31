@@ -9,6 +9,7 @@ const config1 = require('../../../config/default.json');
 var moment = require('moment');
 moment().format();
 let baseURL = 'http://' + config1.host + ':' + config1.port
+let app
 
 if (process.env.x_api_token)
     config1.x_api_token = process.env.x_api_token
@@ -18,10 +19,16 @@ if (process.env.update_user_url)
     config1.update_user_url = process.env.update_user_url
 if (process.env.user_detail_url)
     config1.user_detail_url = process.env.user_detail_url
+if (process.env.api_url)
+  config1.api_url = process.env.api_url
 
 class Service {
   constructor (options) {
     this.options = options || {};
+  }
+
+  setup(app){
+    this.app = app;
   }
 
   find (params) {
@@ -105,26 +112,63 @@ var createFunction = async (function(data,params) {
     if (userDetail != null) {
       // console.log('userDetail......', userDetail.data)
       if(userDetail.data.hasOwnProperty("package")){
-        var packageObj = await (makePackageObj(thisSubscription, checkout_res.id, userDetail.data.package))
+        var packageObj = await (makePackageObj(thisSubscription, checkout_res.id, userDetail.data.package, userDetail))
         var u_id = userDetail.data._id
-        if(userDetail.data.hasOwnProperty("package_history")){
-          userDetail.data.package_history.push(userDetail.data.package)
-          console.log('Valid Token!')
-          var _resConfirm = await (axios.put(config1.update_user_url + u_id, {package: packageObj,package_history:userDetail.data.package_history}, config))
-        }
-        else {
-          let package_history = []
-          package_history.push(userDetail.data.package)
-          console.log('Valid Token!')
-          var _resConfirm = await (axios.put(config1.update_user_url + u_id, {package: packageObj,package_history:package_history}, config))
-        }
-      }
-      else {
         console.log('Valid Token!')
-        var packageObj = await (makePackageObj(thisSubscription, checkout_res.id, null))
+        axios.post(config1.api_url + 'user-subscription', {package: packageObj})
+        .then(async res => {
+          if (userDetail.data.package) {
+            userDetail.data.package.push({"subscriptionId": res.data.id, "role": "admin"})
+          } else {
+            userDetail.data.package = [{"subscriptionId": res.data.id, "role": "admin"}]
+          }
+          axios.put(config1.update_user_url + u_id, {"package":userDetail.data.package}, config)
+          .then(res => {
+            console.log('User ',  u_id, ' has subscribed  package successfully..!')
+          })
+          .catch(err => {
+            console.log("Error : ", err)
+          })
+          axios.post(config1.api_url + 'reverse-subscription',{"subscriptionId": res.data.id})
+          .then(res => {
+            console.log('subscriptionId : ', res.data.subscriptionId)
+          })
+          .catch(err => {
+            console.log("Error : ", err)
+          })
+        })
+        .catch(err => {
+          console.log("Error : ", err)
+        })
+      } else {
+        console.log('Valid Token!')
+        var packageObj = await (makePackageObj(thisSubscription, checkout_res.id, null, userDetail))
         var u_id = userDetail.data._id
-        // console.log('.............', packageObj)
-        var _resConfirm = await (axios.put(config1.update_user_url + u_id, {package: packageObj}, config))
+        axios.post(config1.api_url + 'user-subscription', {package: packageObj})
+        .then(res => {
+          if (userDetail.data.package) {
+            userDetail.data.package.push({"subscriptionId": res.data.id, "role": "admin"})
+          } else {
+            userDetail.data.package = [{"subscriptionId": res.data.id, "role": "admin"}]
+          }
+          axios.put(config1.update_user_url + u_id, {"package":userDetail.data.package}, config)
+          .then(res => {
+            console.log('User ',  u_id, ' has subscribed  package successfully..!')
+          })
+          .catch(err => {
+            console.log("Error : ", err)
+          })
+          axios.post(config1.api_url + 'reverse-subscription',{"subscriptionId": res.data.id})
+          .then(res => {
+            console.log('subscriptionId : ', res.data.subscriptionId)
+          })
+          .catch(err => {
+            console.log("Error : ", err)
+          })
+        })
+        .catch(err => {
+          console.log("Error : ", err)
+        })
       }
 
       // console.log('>>>>>>>>>>>>>>>>>>>>>>>>>>>..', _resConfirm.data)
@@ -135,17 +179,17 @@ var createFunction = async (function(data,params) {
   }
 })
 
-let makePackageObj = async (function (subData, trans_id, subscribed) {
-  // console.log('....................', subData)
-  // subscribed.expiredOn == moment().format()
+let makePackageObj = async (function (subData, trans_id, subscribed, userDetail) {
   var exdate
-  // console.log(subscribed.expiredOn, moment(subscribed.expiredOn).diff(moment().format(), 'days'))
-  if(moment(subscribed.expiredOn).diff(moment().format(), 'days') <= 0) {
-    exdate = moment().add(subData.validity, 'days').format()
+  if (subscribed != null) {
+    if(moment(subscribed.expiredOn).diff(moment().format(), 'days') <= 0) {
+      exdate = moment().add(subData.validity, 'days').format()
+    } else {
+      exdate = moment(subscribed.expiredOn).add(subData.validity, 'days').format()    
+    }
   } else {
-    exdate = moment(subscribed.expiredOn).add(subData.validity, 'days').format()    
+    exdate = moment().add(subData.validity, 'days').format()
   }
-  let newExDate
   // console.log("exdate :",exdate)
   var detail = {}
   let module = _.groupBy(subData.details, "module")
@@ -158,10 +202,6 @@ let makePackageObj = async (function (subData, trans_id, subscribed) {
         for (let j = 0; j < service[k].length; j++) {
           if (service[k][j].value != 0 || service[k][j].value != '') {
             let actionVal = parseInt(service[k][j].value)
-            // console.log('1 = ', subscribed.details[module[key][i].module], ' 2 = ', subscribed.details[module[key][i].module][k], '3 = ', subscribed.details[module[key][i].module][k][service[k][j].action])
-            if (subscribed.details[module[key][i].module] && subscribed.details[module[key][i].module][k] && subscribed.details[module[key][i].module][k][service[k][j].action]) {
-              actionVal += parseInt(subscribed.details[module[key][i].module][k][service[k][j].action])
-            }
             detail[module[key][i].module][k][service[k][j].action] = actionVal
           }
         }
@@ -173,6 +213,7 @@ let makePackageObj = async (function (subData, trans_id, subscribed) {
   })
 
   var package = {
+    userId: userDetail.data._id,
     expiredOn : exdate,
     details : detail,
     sub_id : subData.id,

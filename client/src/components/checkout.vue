@@ -118,7 +118,6 @@ export default {
         login_token: this.login_token,
         payDetail: this.payDetail
       }
-
 			axios({
 							method:'post',
 							url: baseUrl + "/checkout",
