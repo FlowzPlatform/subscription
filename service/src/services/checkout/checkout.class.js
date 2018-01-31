@@ -115,12 +115,15 @@ var createFunction = async (function(data,params) {
         var packageObj = await (makePackageObj(thisSubscription, checkout_res.id, userDetail.data.package, userDetail))
         var u_id = userDetail.data._id
         console.log('Valid Token!')
-        axios.post(config1.api_url + 'user-subscription', {package: packageObj})
+        axios.post(config1.api_url + 'user-subscription', packageObj)
         .then(async res => {
+          let removeIndex = _.findIndex(userDetail.data.package, ["type","default"])
+          delete userDetail.data.package[removeIndex]['type']
+
           if (userDetail.data.package) {
-            userDetail.data.package.push({"subscriptionId": res.data.id, "role": "admin"})
+            userDetail.data.package.push({"subscriptionId": res.data.id, "role": "admin", "type": "default"})
           } else {
-            userDetail.data.package = [{"subscriptionId": res.data.id, "role": "admin"}]
+            userDetail.data.package = [{"subscriptionId": res.data.id, "role": "admin", "type": "default"}]
           }
           axios.put(config1.update_user_url + u_id, {"package":userDetail.data.package}, config)
           .then(res => {
@@ -144,12 +147,12 @@ var createFunction = async (function(data,params) {
         console.log('Valid Token!')
         var packageObj = await (makePackageObj(thisSubscription, checkout_res.id, null, userDetail))
         var u_id = userDetail.data._id
-        axios.post(config1.api_url + 'user-subscription', {package: packageObj})
+        axios.post(config1.api_url + 'user-subscription', packageObj)
         .then(res => {
           if (userDetail.data.package) {
-            userDetail.data.package.push({"subscriptionId": res.data.id, "role": "admin"})
+            userDetail.data.package.push({"subscriptionId": res.data.id, "role": "admin", "type": "default"})
           } else {
-            userDetail.data.package = [{"subscriptionId": res.data.id, "role": "admin"}]
+            userDetail.data.package = [{"subscriptionId": res.data.id, "role": "admin", "type": "default"}]
           }
           axios.put(config1.update_user_url + u_id, {"package":userDetail.data.package}, config)
           .then(res => {
@@ -212,7 +215,7 @@ let makePackageObj = async (function (subData, trans_id, subscribed, userDetail)
     }
   })
 
-  var package = {
+  return {
     userId: userDetail.data._id,
     expiredOn : exdate,
     details : detail,
@@ -224,7 +227,6 @@ let makePackageObj = async (function (subData, trans_id, subscribed, userDetail)
     validity: subData.validity
   }
   // console.log('==>', JSON.stringify(package))
-  return package
 })
 
 let getUserPackage = async function (authorization) {
