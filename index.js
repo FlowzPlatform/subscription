@@ -1,28 +1,45 @@
 let rp = require('request-promise')
+let domainKey = 'localhost'
+let protocol = 'https'
+if (process.env['domainKey'] !== undefined && process.env['domainKey'] !== '') {
+  domainKey = process.env['domainKey']
+}
+
+if (process.env['NODE_ENV'] !== 'production') {
+  protocol = 'http'
+}
+
 let defaultConfig = {
   'subscriptionURL': '/subscriptionlist',
-  'userDetailURL': 'http://auth.flowzcluster.tk/api/userdetails',
-  'registerModuleURL': 'http://localhost:3030/register-resource',
-  'registerRoleURL': 'http://localhost:3030/register-roles'
+  'userDetailURL': protocol + '://auth.' + domainKey + '/api/userdetails',
+  'registerModuleURL': protocol + '://api.' + domainKey + '/subscription/register-resource',
+  'registerRoleURL': protocol + '://api.' + domainKey + '/subscription/register-roles',
+  'userSubscriptionURL': protocol + '://api.' + domainKey + '/subscription/user-subscription',
+  'userSiteURL': protocol + '://api.' + domainKey + '/serverapi/project-configuration'
 }
 
 let subscriptionURL = defaultConfig['subscriptionURL']
 let userDetailURL = defaultConfig['userDetailURL']
 let registerModuleURL = defaultConfig['registerModuleURL']
 let registerRoleURL = defaultConfig['registerRoleURL']
+let userSubscription = defaultConfig['userSubscriptionURL']
+let userSiteURL = defaultConfig['userSiteURL']
 
-if (process.env['subscriptionURL'] !== undefined && process.env['subscriptionURL'] !== '') {
-  subscriptionURL = process.env['subscriptionURL']
-}
-if (process.env['userDetailURL'] !== undefined && process.env['userDetailURL'] !== '') {
-  userDetailURL = process.env['userDetailURL']
-}
-if (process.env['registerModuleURL'] !== undefined && process.env['registerModuleURL'] !== '') {
-  registerModuleURL = process.env['registerModuleURL']
-}
-if (process.env['registerRoleURL'] !== undefined && process.env['registerRoleURL'] !== '') {
-  registerRoleURL = process.env['registerRoleURL']
-}
+// if (process.env['subscriptionURL'] !== undefined && process.env['subscriptionURL'] !== '') {
+//   subscriptionURL = process.env['subscriptionURL']
+// }
+// if (process.env['userDetailURL'] !== undefined && process.env['userDetailURL'] !== '') {
+//   userDetailURL = process.env['userDetailURL']
+// }
+// if (process.env['registerModuleURL'] !== undefined && process.env['registerModuleURL'] !== '') {
+//   registerModuleURL = process.env['registerModuleURL']
+// }
+// if (process.env['registerRoleURL'] !== undefined && process.env['registerRoleURL'] !== '') {
+//   registerRoleURL = process.env['registerRoleURL']
+// }
+// if (process.env['userSubscription'] !== undefined && process.env['userSubscription'] !== '') {
+//   userSubscription = process.env['userSubscription']
+// }
 
 let userArr = []
 // console.log(userArr)
@@ -186,14 +203,6 @@ module.exports.socketSubscription = async function (authToken, packet, next) {
   next()
 }
 
-let isPlanExpired = (expiryDate) => {
-  let expiryDateObj = new Date((new Date(expiryDate)))
-  if (expiryDateObj < new Date((new Date()).toGMTString())) {
-    return true
-  }
-  return false
-}
-
 let getUserPackage = async function (authorization) {
   return new Promise((resolve, reject) => {
     // if (userArr[authorization] !== undefined) {
@@ -339,48 +348,114 @@ async function findResource (moduleName, route, method, authorization) {
   })
 }
 
+module.exports.getUerSubscription = async function (subscriptionId) {
+  return new Promise((resolve, reject) => {
+    var options = {
+      method: 'get',
+      uri: userSubscription + '/' + subscriptionId
+      // headers: {
+      //   'authorization': authorization
+      // }
+    }
+    console.log("=======RP==find====", options)
+    rp(options)
+    .then(function (resourceDetails) {
+      resolve(JSON.parse(resourceDetails))
+    })
+    .catch(function (err) {
+      if (err) {
+      }
+      resolve(null)
+    })
+  })
+}
+
+module.exports.getSiteInfo = async function (siteId) {
+  return new Promise((resolve, reject) => {
+    var options = {
+      method: 'get',
+      uri: userSiteURL + '/' + siteId
+      // headers: {
+      //   'authorization': authorization
+      // }
+    }
+    console.log("=======RP==find====", options)
+    rp(options)
+    .then(function (resourceDetails) {
+      resolve(JSON.parse(resourceDetails))
+    })
+    .catch(function (err) {
+      if (err) {
+      }
+      resolve(null)
+    })
+  })
+}
+
+let isPlanExpired = (expiryDate) => {
+  let expiryDateObj = new Date((new Date(expiryDate)))
+  if (expiryDateObj < new Date((new Date()).toGMTString())) {
+    return true
+  }
+  return false
+}
+
+module.exports.isPlanExpired = isPlanExpired
+
 // =============================feather Subscription=========================================
 let commonActionValidation = async (context) => {
-  // console.log('==================expiryDate==============',context.params.userPackageDetails)
   try {
-    if (context.params.userPackageDetails !== undefined) {
-      let isPlanExpired = (expiryDate) => {
-        let expiryDateObj = new Date(expiryDate)
-        if (expiryDateObj < new Date((new Date()).toGMTString())) {
-          return true
-        }
-        return false
-      }
-      let userPackageDetails = context.params.userPackageDetails
-      // console.log('==================expiryDate==',new Date((new Date(userPackageDetails.package.expiredOn))),'=====',new Date((new Date()).toGMTString()))
+    const subscription = require('flowz-subscription')
+    console.log('==================expiryDate==============', context.params.headers)
+    let subscriptionId = ''
+    if (context.params.headers.subscriptionid) {
+      console.log('==called direct subscription=>')
+      subscriptionId = context.params.headers.subscriptionid
+    } else if (context.params.headers.siteid) {
+      // get if from website settings
+      console.log('==called site wise subscription=>')
+      let siteDetails = await subscription.getSiteInfo(context.params.headers.siteid)
+      subscriptionId = siteDetails.subscriptionId
+    } else {
+      // get if from website settings
+      console.log('==called user wise subscription=>')
+      userPackageDetails = context.params.userPackageDetails.package
+      let regExpmainPlan = new RegExp('^default', 'i')
+      let findObj = userPackageDetails.find((o) => { return regExpmainPlan.test(o.type) })
+      subscriptionId = findObj.subscriptionId
+    }
+    console.log('=============subscriptionId=', subscriptionId)
+    let userSubscriptionDetails = await subscription.getUerSubscription(subscriptionId)
+    console.log('=============userSubscriptionDetails=', userSubscriptionDetails)
+
+    if (subscription.isPlanExpired(userSubscriptionDetails.expiredOn) === true) {
+      context.result = {status: 403, message: 'subscription package expired'}
+    }
+    if (userSubscriptionDetails.details !== undefined) {
+      let userPackageDetails = userSubscriptionDetails.details
       let serviceName = context.service.options.name
       let moduleName = context.params.moduleName
-      if (userPackageDetails.package === undefined ||
-        userPackageDetails.package.details === undefined ||
-        isPlanExpired(userPackageDetails.package.expiredOn) === true
-      ) {
-        context.result = {status: 403, message: 'subscription package expired'}
-      } else {
-        if (userPackageDetails.package.details[moduleName] !== undefined &&
-          userPackageDetails.package.details[moduleName][serviceName] !== undefined &&
-          userPackageDetails.package.details[moduleName][serviceName][context.method] !== undefined
-        ) {
+      if (userPackageDetails[moduleName] !== undefined) {
+        if (userPackageDetails[moduleName][serviceName] !== undefined &&
+            userPackageDetails[moduleName][serviceName][context.method] !== undefined) {
           let data = await context.service.find({
-            query: {userId: userPackageDetails._id}
+            query: {'subscriptionId': subscriptionId}
           })
-          // console.log(context.path,'==========',userPackageDetails.package.details, '====', data)
           if (data.total !== undefined &&
-            data.total > userPackageDetails.package.details[moduleName][serviceName][context.method]) {
+            data.total > userPackageDetails[moduleName][serviceName][context.method]) {
             context.result = {status: 403, message: 'Access denied'}
           } else {
             return context
           }
+        } else if (context.method === 'get') {
+          return context
         }
       }
     }
     context.result = {status: 403, message: 'Access denied'}
   } catch (e) {
-    context.result = {status: 403, message: e}
+    console.log(e)
+    context.result = {status: 403, message: e.message}
   }
 }
 // find: get: create: update: patch: remove:
@@ -393,6 +468,7 @@ let actionValidation = {
 // =========================================================================================
 module.exports.featherSubscription = async function (req, res, next) {
   // console.log('Subscription Request:', req)
+
   if (req.headers.authorization !== undefined) {
     if (userArr[req.headers.authorization] !== undefined) {
       req.feathers.userPackageDetails = userArr[req.headers.authorization]
