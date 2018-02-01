@@ -1,3 +1,4 @@
+import Utils from './Utils.js'
 let rp = require('request-promise')
 let domainKey = 'localhost'
 let protocol = 'https'
@@ -50,7 +51,8 @@ let moduleResource = {
   'moduleName': '',
   'registerAppModule': '',
   'appRoles': ['Admin'],
-  'registerdIds': {}
+  'registerdIds': {},
+  'registerdRoleIds': {}
 }
 
 module.exports.moduleResource = moduleResource
@@ -209,28 +211,17 @@ module.exports.socketSubscription = async function (authToken, packet, next) {
 
 let getUserPackage = async function (authorization) {
   return new Promise((resolve, reject) => {
-    // if (userArr[authorization] !== undefined) {
-    //   resolve(userArr[authorization])
-    // }
+    let KeyValue = userDetailURL + authorization
     var options = {
       uri: userDetailURL,
       headers: {
         'authorization': authorization
       }
     }
-    // console.log(options)
-    rp(options)
-    .then(function (userDetail) {
-      resolve(JSON.parse(userDetail))
-    })
-    .catch(function (err) {
-      if (err) {
-      }
-      resolve(null)
-    })
+    let userDetail = Utils.CachedRP(options, {key: KeyValue, timeout: 3000})
+    resolve(JSON.parse(userDetail))
   })
 }
-let registerResourceIds = {}
 
 async function registeredAppModulesRole () {
   // console.log('==================moduleName========', moduleResource.moduleName)
@@ -261,15 +252,19 @@ async function registeredAppModulesRole () {
     console.log('Please register your role in "registerAppModule"')
     process.exit()
   }
-  await registerToMainRole(moduleResource.moduleName, moduleResource.appRoles)
-
-  console.log("registed Ids=", moduleResource.registerdIds)
+  let roleIds = await registerToMainRole(moduleResource.moduleName, moduleResource.appRoles)
+  for (let rolekey in roleIds) {
+    moduleResource.registerdRoleIds[roleIds[rolekey].role] = roleIds[rolekey].id
+  }
+  // console.log("registed Ids=", moduleResource.registerdIds)
+  console.log("registed role Ids=", moduleResource.registerdRoleIds)
 }
 
 module.exports.registeredAppModulesRole = registeredAppModulesRole
 
 async function registerToMainService (modulename, resource, actions, authorization) {
   return new Promise((resolve, reject) => {
+    let KeyValue = registerModuleURL + modulename + resource + actions + authorization
     var options = {
       method: 'post',
       uri: registerModuleURL,
@@ -283,23 +278,14 @@ async function registerToMainService (modulename, resource, actions, authorizati
       //   'authorization': authorization
       // }
     }
-    // console.log("=======RP======", options)
-    rp(options)
-    .then(function (resourceDetails) {
-      console.log(resourceDetails)
-      resolve(resourceDetails)
-    })
-    .catch(function (err) {
-      console.log(err)
-      if (err) {
-      }
-      resolve(null)
-    })
+    let resourceDetail = Utils.CachedRP(options, {key: KeyValue, timeout: 0})
+    resolve(resourceDetail)
   })
 }
 
 async function registerToMainRole (modulename, roles, authorization) {
   return new Promise((resolve, reject) => {
+    let KeyValue = registerRoleURL
     var options = {
       method: 'post',
       uri: registerRoleURL,
@@ -312,47 +298,32 @@ async function registerToMainRole (modulename, roles, authorization) {
       //   'authorization': authorization
       // }
     }
-    console.log("=======RP==role====", options)
-    rp(options)
-    .then(function (resourceDetails) {
-      console.log("=======RP==role==result==", resourceDetails)
-      resolve(resourceDetails)
-    })
-    .catch(function (err) {
-      if (err) {
-      }
-      resolve(null)
-    })
+    let resourceRole = Utils.CachedRP(options, {key: KeyValue, timeout: 0})
+    resolve(resourceRole)
   })
 }
 // console.log("=============2111=======")
 // // registeredAppModules()
 // console.log("=============2333=======")
 
-module.exports.getUerSubscription = async function (subscriptionId) {
+module.exports.getUserSubscription = async function (subscriptionId) {
   return new Promise((resolve, reject) => {
-    var options = {
+    let KeyValue = userSubscription + '/' + subscriptionId
+    let options = {
       method: 'get',
       uri: userSubscription + '/' + subscriptionId
       // headers: {
       //   'authorization': authorization
       // }
     }
-    console.log("=======RP==find====", options)
-    rp(options)
-    .then(function (resourceDetails) {
-      resolve(JSON.parse(resourceDetails))
-    })
-    .catch(function (err) {
-      if (err) {
-      }
-      resolve(null)
-    })
+    let subscriptionData = Utils.CachedRP(options, {key: KeyValue, timeout: 30000})
+    resolve(JSON.parse(subscriptionData))
   })
 }
 
 module.exports.getSiteInfo = async function (siteId) {
   return new Promise((resolve, reject) => {
+    let KeyValue = userSiteURL + '/' + siteId
     var options = {
       method: 'get',
       uri: userSiteURL + '/' + siteId
@@ -360,22 +331,14 @@ module.exports.getSiteInfo = async function (siteId) {
       //   'authorization': authorization
       // }
     }
-    console.log("=======RP==find====", options)
-    rp(options)
-    .then(function (resourceDetails) {
-      resolve(JSON.parse(resourceDetails))
-    })
-    .catch(function (err) {
-      if (err) {
-      }
-      resolve(null)
-    })
+    let getSiteData = Utils.CachedRP(options, {key: KeyValue, timeout: 30000})
+    resolve(JSON.parse(getSiteData))
   })
 }
 
-module.exports.checkResourcePermission = async function (resourceId, method, roleId) {
+let checkResourcePermission = async function (resourceId, method, roleId) {
   return new Promise((resolve, reject) => {
-
+    let KeyValue = resourcePermissionURL + '/' + moduleResource.moduleName + '/' + method + '/' + roleId + '/' + resourceId
     var options = {
       method: 'get',
       uri: resourcePermissionURL + '/' + moduleResource.moduleName + '/' + method + '/' + roleId + '/' + resourceId
@@ -383,18 +346,12 @@ module.exports.checkResourcePermission = async function (resourceId, method, rol
       //   'authorization': authorization
       // }
     }
-    console.log("===checkResourcePermission====RP==find====", options)
-    rp(options)
-    .then(function (resourceDetails) {
-      resolve(JSON.parse(resourceDetails))
-    })
-    .catch(function (err) {
-      if (err) {
-      }
-      resolve(null)
-    })
+    let resourcePermission = Utils.CachedRP(options, {key: KeyValue, timeout: 30000})
+    resolve(JSON.parse(resourcePermission))
   })
 }
+
+module.exports.checkResourcePermission = checkResourcePermission
 
 let isPlanExpired = (expiryDate) => {
   let expiryDateObj = new Date((new Date(expiryDate)))
@@ -412,6 +369,8 @@ let commonActionValidation = async (context) => {
     const subscription = require('flowz-subscription')
     console.log('==================expiryDate==============', context.params.headers)
     let subscriptionId = ''
+    let userRole = ''
+    let userDetails = ''
     if (context.params.headers.subscriptionid) {
       console.log('==called direct subscription=>')
       subscriptionId = context.params.headers.subscriptionid
@@ -420,25 +379,38 @@ let commonActionValidation = async (context) => {
       console.log('==called site wise subscription=>')
       let siteDetails = await subscription.getSiteInfo(context.params.headers.siteid)
       subscriptionId = siteDetails.subscriptionId
-    } else {
+    } else if (context.params.userPackageDetails) {
       // get if from website settings
-      console.log('==called user wise subscription=>')
-      userPackageDetails = context.params.userPackageDetails.package
-      let regExpmainPlan = new RegExp('^default', 'i')
-      let findObj = userPackageDetails.find((o) => { return regExpmainPlan.test(o.type) })
-      subscriptionId = findObj.subscriptionId
+      userDetails = context.params.userPackageDetails
+      if (userDetails.defaultSubscriptionId) {
+        subscriptionId = userDetails.defaultSubscriptionId
+        userRole = userDetails.defaultSubscriptionId
+      }
+    } else {
+      
     }
     console.log('=============subscriptionId=', subscriptionId)
-    let userSubscriptionDetails = await subscription.getUerSubscription(subscriptionId)
+    let userSubscriptionDetails = await subscription.getUserSubscription(subscriptionId)
     console.log('=============userSubscriptionDetails=', userSubscriptionDetails)
 
     if (subscription.isPlanExpired(userSubscriptionDetails.expiredOn) === true) {
       context.result = {status: 403, message: 'subscription package expired'}
     }
+    let moduleName = context.params.moduleName
+    let subscribePack = context.params.userPackageDetails.package[subscriptionId]
+
+    if (subscribePack !== undefined) {
+      userRole = subscribePack.role[moduleName]
+    } else {
+      userRole = 'loginedUser'
+    }
+    if(subscription.isUserHasActionPermission() === false) {
+      context.result = {status: 403, message: 'Access denied for action'}
+    }
+
     if (userSubscriptionDetails.details !== undefined) {
       let userPackageDetails = userSubscriptionDetails.details
       let serviceName = context.service.options.name
-      let moduleName = context.params.moduleName
       if (userPackageDetails[moduleName] !== undefined) {
         if (userPackageDetails[moduleName][serviceName] !== undefined &&
             userPackageDetails[moduleName][serviceName][context.method] !== undefined) {
@@ -477,7 +449,7 @@ module.exports.featherSubscription = async function (req, res, next) {
     if (userArr[req.headers.authorization] !== undefined) {
       req.feathers.userPackageDetails = userArr[req.headers.authorization]
       req.feathers.moduleName = moduleResource.moduleName
-      req.feathers.resourceIds = moduleResource.registerdIds
+      req.feathers.registerdRoleIds = moduleResource.registerdRoleIds
       return next()
     }
     let userDetail = await isValidAuthToken(req.headers.authorization)
@@ -486,6 +458,7 @@ module.exports.featherSubscription = async function (req, res, next) {
       req.feathers.userPackageDetails = userDetail.data
       req.feathers.moduleName = moduleResource.moduleName
       req.feathers.resourceIds = moduleResource.registerdIds
+      req.feathers.registerdRoleIds = moduleResource.registerdRoleIds
       return next()
     }
     // if (userDetail === false) {
@@ -533,7 +506,7 @@ let registerDynamicHooks = (appObj, registerModules) => {
             }
             let objHookPermission = {
               before: {
-                [actionVal]: isModulePermission
+                [actionVal]: isActionPermission
               }
             }
             appObj.service(valIdx).hooks(objHookPermission)
@@ -545,7 +518,28 @@ let registerDynamicHooks = (appObj, registerModules) => {
   }
 }
 
-let isModulePermission = async (context) => {
+let isUserHasActionPermission = async (context, userSubscribeObj) => {
+  try {
+    let serviceName = context.service.options.name
+    let moduleName = context.params.moduleName
+    let resourceIds = context.params.resourceIds
+    let registerdRoleIds = context.params.registerdRoleIds
+    let userRole = userSubscribeObj.role[moduleName]
+    userRole = userRole.toLowerCase()
+    let resourcePermission = await checkResourcePermission(resourceIds[serviceName], context.method, registerdRoleIds[userRole])
+    console.log('=============resourcePermission=', resourcePermission)
+    if (resourcePermission['data'] && resourcePermission['data']['accessValue'] > 0) {
+      return true
+    }
+    return false
+  } catch (e) {
+    return false
+  }
+}
+
+module.exports.isUserHasActionPermission = isUserHasActionPermission
+
+let isActionPermission = async (context) => {
   try {
     const subscription = require('flowz-subscription')
     console.log('==================isModulePermission==============', context.params)
@@ -573,7 +567,9 @@ let isModulePermission = async (context) => {
     let serviceName = context.service.options.name
     let moduleName = context.params.moduleName
     let resourceIds = context.params.resourceIds
+    let registerdRoleIds = context.params.registerdRoleIds
     console.log("==============resourceIds=====", resourceIds)
+    console.log("==============registerdRoleIds=====", registerdRoleIds)
     if (context.params.userPackageDetails &&
         context.params.userPackageDetails.package &&
         context.params.userPackageDetails.package.length > 0) {
@@ -585,9 +581,10 @@ let isModulePermission = async (context) => {
         userRole = findObj.role[moduleName]
       }
     }
+    userRole = userRole.toLowerCase()
     userPackageDetails = context.params.userPackageDetails.package
     console.log('=============subscriptionId=', subscriptionId)
-    let resourcePermission = await subscription.checkResourcePermission(resourceIds[serviceName], context.method, userRole)
+    let resourcePermission = await subscription.checkResourcePermission(resourceIds[serviceName], context.method, registerdRoleIds[userRole])
     console.log('=============resourcePermission=', resourcePermission)
     if (resourcePermission['data'] && resourcePermission['data']['accessValue'] > 0) {
       return context
