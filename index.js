@@ -15,7 +15,8 @@ let defaultConfig = {
   'registerModuleURL': protocol + '://api.' + domainKey + '/subscription/register-resource',
   'registerRoleURL': protocol + '://api.' + domainKey + '/subscription/register-roles',
   'userSubscriptionURL': protocol + '://api.' + domainKey + '/subscription/user-subscription',
-  'userSiteURL': protocol + '://api.' + domainKey + '/serverapi/project-configuration'
+  'userSiteURL': protocol + '://api.' + domainKey + '/serverapi/project-configuration',
+  'resourcePermissionURL': protocol + '://api.' + domainKey + '/authldap/getpermission'
 }
 
 let subscriptionURL = defaultConfig['subscriptionURL']
@@ -24,6 +25,7 @@ let registerModuleURL = defaultConfig['registerModuleURL']
 let registerRoleURL = defaultConfig['registerRoleURL']
 let userSubscription = defaultConfig['userSubscriptionURL']
 let userSiteURL = defaultConfig['userSiteURL']
+let resourcePermissionURL = defaultConfig['resourcePermissionURL']
 
 // if (process.env['subscriptionURL'] !== undefined && process.env['subscriptionURL'] !== '') {
 //   subscriptionURL = process.env['subscriptionURL']
@@ -46,7 +48,8 @@ let userArr = []
 let moduleResource = {
   'moduleName': '',
   'registerAppModule': '',
-  'appRoles': ['Admin']
+  'appRoles': ['Admin'],
+  'registerdIds': {}
 }
 
 module.exports.moduleResource = moduleResource
@@ -226,6 +229,7 @@ let getUserPackage = async function (authorization) {
     })
   })
 }
+let registerResourceIds = {}
 
 async function registeredAppModulesRole () {
   // console.log('==================moduleName========', moduleResource.moduleName)
@@ -248,7 +252,8 @@ async function registeredAppModulesRole () {
         newActionValue[actionKey] = actionValue[actionKey]
       }
     }
-    await registerToMainService(moduleResource.moduleName, resourceName, newActionValue)
+    let resourceData = await registerToMainService(moduleResource.moduleName, resourceName, newActionValue)
+    moduleResource.registerdIds[resourceName] = resourceData.id
   }
 
   if (moduleResource.appRoles === undefined || moduleResource.appRoles.length === 0) {
@@ -256,6 +261,8 @@ async function registeredAppModulesRole () {
     process.exit()
   }
   await registerToMainRole(moduleResource.moduleName, moduleResource.appRoles)
+
+  console.log("registed Ids=", moduleResource.registerdIds)
 }
 
 module.exports.registeredAppModulesRole = registeredAppModulesRole
@@ -320,34 +327,6 @@ async function registerToMainRole (modulename, roles, authorization) {
 // // registeredAppModules()
 // console.log("=============2333=======")
 
-module.exports.isAccess = (moduleName, route, method) => {
-  return new Promise(async (resolve, reject) => {
-    registerModuleURL
-  })
-}
-
-async function findResource (moduleName, route, method, authorization) {
-  return new Promise((resolve, reject) => {
-    var options = {
-      method: 'get',
-      uri: registerModuleURL + '?method=' + method + '&route=' + route + '&module=' + moduleName
-      // headers: {
-      //   'authorization': authorization
-      // }
-    }
-    console.log("=======RP==find====", options)
-    rp(options)
-    .then(function (resourceDetails) {
-      resolve(resourceDetails)
-    })
-    .catch(function (err) {
-      if (err) {
-      }
-      resolve(null)
-    })
-  })
-}
-
 module.exports.getUerSubscription = async function (subscriptionId) {
   return new Promise((resolve, reject) => {
     var options = {
@@ -380,6 +359,29 @@ module.exports.getSiteInfo = async function (siteId) {
       // }
     }
     console.log("=======RP==find====", options)
+    rp(options)
+    .then(function (resourceDetails) {
+      resolve(JSON.parse(resourceDetails))
+    })
+    .catch(function (err) {
+      if (err) {
+      }
+      resolve(null)
+    })
+  })
+}
+
+module.exports.checkResourcePermission = async function (resourceId, method, roleId) {
+  return new Promise((resolve, reject) => {
+
+    var options = {
+      method: 'get',
+      uri: resourcePermissionURL + '/' + moduleResource.moduleName + '/' + method + '/' + roleId + '/' + resourceId
+      // headers: {
+      //   'authorization': authorization
+      // }
+    }
+    console.log("===checkResourcePermission====RP==find====", options)
     rp(options)
     .then(function (resourceDetails) {
       resolve(JSON.parse(resourceDetails))
@@ -473,6 +475,7 @@ module.exports.featherSubscription = async function (req, res, next) {
     if (userArr[req.headers.authorization] !== undefined) {
       req.feathers.userPackageDetails = userArr[req.headers.authorization]
       req.feathers.moduleName = moduleResource.moduleName
+      req.feathers.resourceIds = moduleResource.registerdIds
       return next()
     }
     let userDetail = await isValidAuthToken(req.headers.authorization)
@@ -480,6 +483,7 @@ module.exports.featherSubscription = async function (req, res, next) {
       userArr[req.headers.authorization] = userDetail.data
       req.feathers.userPackageDetails = userDetail.data
       req.feathers.moduleName = moduleResource.moduleName
+      req.feathers.resourceIds = moduleResource.registerdIds
       return next()
     }
     // if (userDetail === false) {
@@ -525,11 +529,73 @@ let registerDynamicHooks = (appObj, registerModules) => {
                 [actionVal]: actionValidation[actionVal]
               }
             }
+            let objHookPermission = {
+              before: {
+                [actionVal]: isModulePermission
+              }
+            }
+            appObj.service(valIdx).hooks(objHookPermission)
             appObj.service(valIdx).hooks(objHook)
           }
         })
       }
     }
+  }
+}
+
+let isModulePermission = async (context) => {
+  try {
+    const subscription = require('flowz-subscription')
+    console.log('==================isModulePermission==============', context.params)
+    let subscriptionId = ''
+    let userRole = ''
+    if (context.params.headers.subscriptionid) {
+      console.log('==called direct subscription=>')
+      subscriptionId = context.params.headers.subscriptionid
+    } else if (context.params.headers.siteid) {
+      // get if from website settings
+      console.log('==called site wise subscription=>')
+      let siteDetails = await subscription.getSiteInfo(context.params.headers.siteid)
+      subscriptionId = siteDetails.subscriptionId
+    } else {
+      // get if from website settings
+      console.log('==called user wise subscription=>')
+      let userPackageDetails = context.params.userPackageDetails.package
+      let regExpmainPlan = new RegExp('^default', 'i')
+      let findObj = userPackageDetails.find((o) => { return regExpmainPlan.test(o.type) })
+      if (findObj !== undefined) {
+        subscriptionId = findObj.subscriptionId
+        userRole = findObj.role
+      }
+    }
+    let serviceName = context.service.options.name
+    let moduleName = context.params.moduleName
+    let resourceIds = context.params.resourceIds
+    console.log("==============resourceIds=====", resourceIds)
+    if (context.params.userPackageDetails &&
+        context.params.userPackageDetails.package &&
+        context.params.userPackageDetails.package.length > 0) {
+      let userPackageDetails = context.params.userPackageDetails.package
+      let regExpmainPlan = new RegExp('^' + subscriptionId, 'i')
+      let findObj = userPackageDetails.find((o) => { return regExpmainPlan.test(o.subscriptionId) })
+      if (findObj !== undefined) {
+        if (findObj.role[moduleName])
+        userRole = findObj.role[moduleName]
+      }
+    }
+    userPackageDetails = context.params.userPackageDetails.package
+    console.log('=============subscriptionId=', subscriptionId)
+    let resourcePermission = await subscription.checkResourcePermission(resourceIds[serviceName], context.method, userRole)
+    console.log('=============resourcePermission=', resourcePermission)
+    if (resourcePermission['data'] && resourcePermission['data']['accessValue'] > 0) {
+      return context
+    }
+    context.result = {status: 403, message: 'Access denied for resource'}
+    return context
+  } catch (e) {
+    console.log(e)
+    context.result = {status: 403, message: e.message}
+    return context
   }
 }
 
