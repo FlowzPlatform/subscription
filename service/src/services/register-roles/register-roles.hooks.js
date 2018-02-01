@@ -75,6 +75,4 @@ var modify = async(function(hook){
     }
     hook.data = obj
   }
-
-  hook.result = {"data":obj}
 })

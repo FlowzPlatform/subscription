@@ -13,7 +13,8 @@ let defaultConfig = {
   'subscriptionURL': '/subscriptionlist',
   'userDetailURL': protocol + '://auth.' + domainKey + '/api/userdetails',
   'registerModuleURL': protocol + '://api.' + domainKey + '/subscription/register-resource',
-  'registerRoleURL': protocol + '://api.' + domainKey + '/subscription/register-roles',
+  //'registerRoleURL': protocol + '://api.' + domainKey + '/subscription/register-roles',
+  'registerRoleURL':   'http://localhost:3030/register-roles',
   'userSubscriptionURL': protocol + '://api.' + domainKey + '/subscription/user-subscription',
   'userSiteURL': protocol + '://api.' + domainKey + '/serverapi/project-configuration',
   'resourcePermissionURL': protocol + '://api.' + domainKey + '/authldap/getpermission'
@@ -314,6 +315,7 @@ async function registerToMainRole (modulename, roles, authorization) {
     console.log("=======RP==role====", options)
     rp(options)
     .then(function (resourceDetails) {
+      console.log("=======RP==role==result==", resourceDetails)
       resolve(resourceDetails)
     })
     .catch(function (err) {
