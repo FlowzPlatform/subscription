@@ -1,9 +1,17 @@
-import Utils from './Utils.js'
+let Utils = require('./Utils.js')
 let rp = require('request-promise')
 let domainKey = 'localhost'
 let protocol = 'https'
 if (process.env['domainKey'] !== undefined && process.env['domainKey'] !== '') {
   domainKey = process.env['domainKey']
+}
+
+const timeouts = {
+  'checkResourcePermission': 3600,
+  'getUserPackage': 7200,
+  'getRegisterRole': 86400,
+  'getUserSubscription': 86400,
+  'getSiteInfo': 7200
 }
 
 if (process.env['NODE_ENV'] !== 'production') {
@@ -12,10 +20,10 @@ if (process.env['NODE_ENV'] !== 'production') {
 
 let defaultConfig = {
   'subscriptionURL': '/subscriptionlist',
-  'userDetailURL': protocol + '://auth.' + domainKey + '/api/userdetails',
+  'userDetailURL': protocol + '://api.' + domainKey + '/auth/api/userdetails',
   'registerModuleURL': protocol + '://api.' + domainKey + '/subscription/register-resource',
-  //'registerRoleURL': protocol + '://api.' + domainKey + '/subscription/register-roles',
-  'registerRoleURL':   'http://localhost:3030/register-roles',
+  'registerRoleURL': protocol + '://api.' + domainKey + '/subscription/register-roles',
+  // 'registerRoleURL':   'http://localhost:3030/register-roles',
   'userSubscriptionURL': protocol + '://api.' + domainKey + '/subscription/user-subscription',
   'userSiteURL': protocol + '://api.' + domainKey + '/serverapi/project-configuration',
   'resourcePermissionURL': protocol + '://api.' + domainKey + '/authldap/getpermission'
@@ -71,146 +79,17 @@ module.exports.secureService = secureService
 */
 let isValidAuthToken = async (authToken) => {
   return new Promise(async (resolve, reject) => {
-    console.log('=isValidAuthToken=call=>' + '<==')
     let userDetail = await getUserPackage(authToken)
     if (userDetail !== undefined && userDetail !== null) {
-      console.log('=isValidAuthToken=call with details=><==')
       resolve(userDetail)
     }
-    console.log('=isValidAuthToken=call end=>' + '<==')
     resolve(false)
   })
 }
 
-let isValidSubscriptionPack = (userDetails, mainRoute, mainMethod) => {
-  console.log('=isValidSubscriptionPack=call=><==')
-  let userPlan = userDetails.data.package.details
-  let regExpmainRoute = new RegExp('^' + mainRoute, 'i')
-  let regExpmainMethod = new RegExp('^' + mainMethod, 'i')
-  console.log('==isValidSubscriptionPack 1=>' + mainRoute + '<==>' + mainMethod + '<==')
-  let findObj = userPlan.find((o) => { return regExpmainRoute.test(o.route) && regExpmainMethod.test(o.method) })
-  console.log('=isValidSubscriptionPack=end=><==')
-  return (findObj !== undefined) ? findObj : false
-}
-
-module.exports.subscription = async function (req, res, next) {
-  // console.log('Subscription Request:', req.headers.authorization)
-  console.log('=subscription=1=>' + (req.baseUrl + req._parsedUrl.pathname) + '<==')
-  let userDetail = await isValidAuthToken(req.headers.authorization)
-  if (userDetail === false) {
-    res.redirect(401, subscriptionURL)
-    return false
-  }
-  console.log('=subscription=2=>' + (req.baseUrl + req._parsedUrl.pathname) + '<==')
-  // Package details not available
-  if (userDetail.data.package === undefined || userDetail.data.package.details === undefined) {
-    console.log('planExpire===>')
-    res.redirect(401, subscriptionURL)
-    return false
-  }
-  console.log('=subscription=3=>')
-  // check plan expir or not
-  if (isPlanExpired(userDetail.data.package.expiredOn)) {
-    console.log('planExpire===>')
-    res.redirect(403, subscriptionURL)
-    return false
-  }
-  console.log('=subscription=4=>')
-  if (userDetail.data.package !== undefined && userDetail.data.package.details !== undefined) {
-    let mainRoute = req.baseUrl + req._parsedUrl.pathname
-    let mainMethod = req.method.replace("'", '')
-    console.log('=subscription=5=>')
-    let packageInfo = isValidSubscriptionPack(userDetail, mainRoute, mainMethod)
-    console.log('=subscription=6=>')
-    if (packageInfo !== false) {
-      try {
-        console.log('=subscription=7=>')
-        console.log(secureService.validate.toString())
-        if (typeof secureService.validate === 'function') {
-          console.log('=subscription=8=>')
-          let isSecure = await secureService.validate(mainRoute, req, packageInfo, userDetail)
-          console.log('=subscription=9=>', isSecure)
-          if (isSecure !== true) {
-            console.log('=subscription=10=>')
-            res.redirect(403, subscriptionURL)
-            return false
-          }
-        } else {
-          console.log('=subscription=11=>')
-          res.redirect(403, subscriptionURL)
-          return false
-        }
-      } catch (e) {
-        console.log('=subscription=12=>')
-        res.redirect(403, subscriptionURL)
-        return false
-      }
-    }
-    console.log('=subscription=13=>')
-  }
-  console.log('=subscription=14=>')
-  next()
-}
-
-module.exports.socketSubscription = async function (authToken, packet, next) {
-  // console.log('Subscription Request:', req.headers.authorization)
-  console.log('=socketSubscription=1=>' + '<==')
-  let userDetail = await isValidAuthToken(authToken)
-  if (userDetail === false) {
-    next(new Error('invalid authToken'))
-    return false
-  }
-  console.log('=socketSubscription=2=>' + '<==')
-  // Package details not available
-  if (userDetail.data.package === undefined || userDetail.data.package.details === undefined) {
-    console.log('no package avaibale===>')
-    next(new Error('no package avaibale'))
-    return false
-  }
-  console.log('=socketSubscription=3=>')
-  // check plan expir or not
-  if (isPlanExpired(userDetail.data.package.expiredOn)) {
-    console.log('planExpire===>')
-    next(new Error('your subscription plan expird'))
-    return false
-  }
-  console.log('=socketSubscription=4=>')
-  if (userDetail.data.package !== undefined && userDetail.data.package.details !== undefined) {
-    let url = packet[0].split('::')
-    let mainRoute = url[0]
-    let mainMethod = url[1]
-    console.log('=socketSubscription=5=>')
-    let packageInfo = isValidSubscriptionPack(userDetail, mainRoute, mainMethod)
-    console.log('=socketSubscription=6=>')
-    if (packageInfo !== false) {
-      try {
-        console.log('=socketSubscription=7=>')
-        console.log(secureService.validate.toString())
-        if (typeof secureService.validate === 'function') {
-          console.log('=socketSubscription=8=>')
-          let isSecure = await secureService.validate(mainRoute, packet, packageInfo, userDetail)
-          console.log('=socketSubscription=9=>')
-          if (isSecure !== true) {
-            console.log('=socketSubscription=10=>')
-            return next(new Error('Access Forbidden'))
-          }
-        } else {
-          console.log('=socketSubscription=11=>')
-          return next(new Error('Access Forbidden'))
-        }
-      } catch (e) {
-        console.log('=socketSubscription=12=>')
-        return next(new Error('Access Forbidden'))
-      }
-    }
-    console.log('=socketSubscription=13=>')
-  }
-  console.log('=socketSubscription=14=>')
-  next()
-}
 
 let getUserPackage = async function (authorization) {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     let KeyValue = userDetailURL + authorization
     var options = {
       uri: userDetailURL,
@@ -218,7 +97,8 @@ let getUserPackage = async function (authorization) {
         'authorization': authorization
       }
     }
-    let userDetail = Utils.CachedRP(options, {key: KeyValue, timeout: 3000})
+    let userDetail = await Utils.CachedRP(options, {key: KeyValue, timeout: timeouts['getUserPackage']})
+    console.log(userDetail)
     resolve(JSON.parse(userDetail))
   })
 }
@@ -252,18 +132,18 @@ async function registeredAppModulesRole () {
     console.log('Please register your role in "registerAppModule"')
     process.exit()
   }
-  let roleIds = await registerToMainRole(moduleResource.moduleName, moduleResource.appRoles)
-  for (let rolekey in roleIds) {
-    moduleResource.registerdRoleIds[roleIds[rolekey].role] = roleIds[rolekey].id
+  await registerToMainRole(moduleResource.moduleName, moduleResource.appRoles)
+  for (let rolekey in moduleResource.appRoles) {
+    let roleId = await getRegisterRole(moduleResource.moduleName, moduleResource.appRoles[rolekey])
+    moduleResource.registerdRoleIds[moduleResource.appRoles[rolekey].toLowerCase()] = roleId['data'][0].id
   }
   // console.log("registed Ids=", moduleResource.registerdIds)
-  console.log("registed role Ids=", moduleResource.registerdRoleIds)
+  // console.log("registed role Ids=", moduleResource.registerdRoleIds)
 }
-
 module.exports.registeredAppModulesRole = registeredAppModulesRole
 
 async function registerToMainService (modulename, resource, actions, authorization) {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     let KeyValue = registerModuleURL + modulename + resource + actions + authorization
     var options = {
       method: 'post',
@@ -278,13 +158,13 @@ async function registerToMainService (modulename, resource, actions, authorizati
       //   'authorization': authorization
       // }
     }
-    let resourceDetail = Utils.CachedRP(options, {key: KeyValue, timeout: 0})
+    let resourceDetail = await Utils.CachedRP(options, {key: KeyValue, timeout: 0})
     resolve(resourceDetail)
   })
 }
 
 async function registerToMainRole (modulename, roles, authorization) {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     let KeyValue = registerRoleURL
     var options = {
       method: 'post',
@@ -298,8 +178,23 @@ async function registerToMainRole (modulename, roles, authorization) {
       //   'authorization': authorization
       // }
     }
-    let resourceRole = Utils.CachedRP(options, {key: KeyValue, timeout: 0})
+    let resourceRole = await Utils.CachedRP(options, {key: KeyValue, timeout: 0})
     resolve(resourceRole)
+  })
+}
+
+async function getRegisterRole (modulename, roles, authorization) {
+  return new Promise(async (resolve, reject) => {
+    let KeyValue = registerRoleURL + '?module=' + modulename + '&role=' + roles.toLowerCase()
+    var options = {
+      method: 'get',
+      uri: registerRoleURL + '?module=' + modulename + '&role=' + roles.toLowerCase()
+      // headers: {
+      //   'authorization': authorization
+      // }
+    }
+    let resourceRole = await Utils.CachedRP(options, {key: KeyValue, timeout: timeouts['getRegisterRole']})
+    resolve(JSON.parse(resourceRole))
   })
 }
 // console.log("=============2111=======")
@@ -307,7 +202,8 @@ async function registerToMainRole (modulename, roles, authorization) {
 // console.log("=============2333=======")
 
 module.exports.getUserSubscription = async function (subscriptionId) {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
+    if (subscriptionId === undefined || subscriptionId === '') resolve(null)
     let KeyValue = userSubscription + '/' + subscriptionId
     let options = {
       method: 'get',
@@ -316,60 +212,17 @@ module.exports.getUserSubscription = async function (subscriptionId) {
       //   'authorization': authorization
       // }
     }
-    let subscriptionData = Utils.CachedRP(options, {key: KeyValue, timeout: 30000})
+    let subscriptionData = await Utils.CachedRP(options, {key: KeyValue, timeout: timeouts['getUserSubscription']})
     resolve(JSON.parse(subscriptionData))
   })
 }
-
-module.exports.getSiteInfo = async function (siteId) {
-  return new Promise((resolve, reject) => {
-    let KeyValue = userSiteURL + '/' + siteId
-    var options = {
-      method: 'get',
-      uri: userSiteURL + '/' + siteId
-      // headers: {
-      //   'authorization': authorization
-      // }
-    }
-    let getSiteData = Utils.CachedRP(options, {key: KeyValue, timeout: 30000})
-    resolve(JSON.parse(getSiteData))
-  })
-}
-
-let checkResourcePermission = async function (resourceId, method, roleId) {
-  return new Promise((resolve, reject) => {
-    let KeyValue = resourcePermissionURL + '/' + moduleResource.moduleName + '/' + method + '/' + roleId + '/' + resourceId
-    var options = {
-      method: 'get',
-      uri: resourcePermissionURL + '/' + moduleResource.moduleName + '/' + method + '/' + roleId + '/' + resourceId
-      // headers: {
-      //   'authorization': authorization
-      // }
-    }
-    let resourcePermission = Utils.CachedRP(options, {key: KeyValue, timeout: 30000})
-    resolve(JSON.parse(resourcePermission))
-  })
-}
-
-module.exports.checkResourcePermission = checkResourcePermission
-
-let isPlanExpired = (expiryDate) => {
-  let expiryDateObj = new Date((new Date(expiryDate)))
-  if (expiryDateObj < new Date((new Date()).toGMTString())) {
-    return true
-  }
-  return false
-}
-
-module.exports.isPlanExpired = isPlanExpired
 
 // =============================feather Subscription=========================================
 let commonActionValidation = async (context) => {
   try {
     const subscription = require('flowz-subscription')
-    console.log('==================expiryDate==============', context.params.headers)
+    console.log('==================Subscription Start==============')
     let subscriptionId = ''
-    let userRole = ''
     let userDetails = ''
     if (context.params.headers.subscriptionid) {
       console.log('==called direct subscription=>')
@@ -378,40 +231,36 @@ let commonActionValidation = async (context) => {
       // get if from website settings
       console.log('==called site wise subscription=>')
       let siteDetails = await subscription.getSiteInfo(context.params.headers.siteid)
-      subscriptionId = siteDetails.subscriptionId
+      subscriptionId = siteDetails && siteDetails.subscriptionId !== undefined ? siteDetails.subscriptionId : ''
     } else if (context.params.userPackageDetails) {
       // get if from website settings
       userDetails = context.params.userPackageDetails
       if (userDetails.defaultSubscriptionId) {
         subscriptionId = userDetails.defaultSubscriptionId
-        userRole = userDetails.defaultSubscriptionId
       }
-    } else {
-      
     }
     console.log('=============subscriptionId=', subscriptionId)
     let userSubscriptionDetails = await subscription.getUserSubscription(subscriptionId)
     console.log('=============userSubscriptionDetails=', userSubscriptionDetails)
-
-    if (subscription.isPlanExpired(userSubscriptionDetails.expiredOn) === true) {
+    // check subscription plan expired or not
+    if (userSubscriptionDetails && subscription.isPlanExpired(userSubscriptionDetails.expiredOn) === true) {
       context.result = {status: 403, message: 'subscription package expired'}
+      return context
     }
+
     let moduleName = context.params.moduleName
-    let subscribePack = context.params.userPackageDetails.package[subscriptionId]
-
-    if (subscribePack !== undefined) {
-      userRole = subscribePack.role[moduleName]
-    } else {
-      userRole = 'loginedUser'
-    }
-    if(subscription.isUserHasActionPermission() === false) {
+    let userRole = subscription.getUserRole(context, subscriptionId)
+    console.log('=============userRole=', userRole)
+    if (await subscription.isUserHasActionPermission(context, userRole) === false) {
       context.result = {status: 403, message: 'Access denied for action'}
+      return context
     }
 
-    if (userSubscriptionDetails.details !== undefined) {
+    if (userSubscriptionDetails && userSubscriptionDetails.details !== undefined) {
+      console.log('=============userSubscriptionDetails.details=', userSubscriptionDetails.details)
       let userPackageDetails = userSubscriptionDetails.details
       let serviceName = context.service.options.name
-      if (userPackageDetails[moduleName] !== undefined) {
+      if (userPackageDetails[moduleName]) {
         if (userPackageDetails[moduleName][serviceName] !== undefined &&
             userPackageDetails[moduleName][serviceName][context.method] !== undefined) {
           let data = await context.service.find({
@@ -420,15 +269,15 @@ let commonActionValidation = async (context) => {
           if (data.total !== undefined &&
             data.total > userPackageDetails[moduleName][serviceName][context.method]) {
             context.result = {status: 403, message: 'Access denied'}
+            return context
           } else {
             return context
           }
-        } else if (context.method === 'get') {
-          return context
         }
       }
     }
-    context.result = {status: 403, message: 'Access denied'}
+    // context.result = {status: 403, message: 'Access denied'}
+    return context
   } catch (e) {
     console.log(e)
     context.result = {status: 403, message: e.message}
@@ -441,51 +290,108 @@ let actionValidation = {
   // "remove": () => {},
 }
 
+module.exports.getSiteInfo = async function (siteId) {
+  return new Promise(async (resolve, reject) => {
+    let KeyValue = userSiteURL + '/' + siteId
+    var options = {
+      method: 'get',
+      uri: userSiteURL + '/' + siteId
+      // headers: {
+      //   'authorization': authorization
+      // }
+    }
+    let getSiteData = await Utils.CachedRP(options, {key: KeyValue, timeout: timeouts['getSiteInfo']})
+    resolve(JSON.parse(getSiteData))
+  })
+}
+
+let isPlanExpired = (expiryDate) => {
+  let expiryDateObj = new Date((new Date(expiryDate)))
+  if (expiryDateObj < new Date((new Date()).toGMTString())) {
+    return true
+  }
+  return false
+}
+module.exports.isPlanExpired = isPlanExpired
+
+let getUserRole = (context, subscriptionId) => {
+  const AnonymousRole = 'anonymous'
+  const LoggedInUserRole = 'loggedin'
+  const AdminRole = 'admin'
+  const SuperAdminRole = 'superadmin'
+  try {
+    let moduleName = context.params.moduleName
+    if (context.params.userPackageDetails) {
+      if (context.params.userPackageDetails.package &&
+      context.params.userPackageDetails.package[subscriptionId]) {
+        let subscriptionPack = context.params.userPackageDetails.package[subscriptionId]
+        if (subscriptionPack['role'][moduleName]) {
+          // for assign users
+          return subscriptionPack['role'][moduleName]
+        } else if (subscriptionPack['role'] === AdminRole || subscriptionPack['role'] === SuperAdminRole) {
+          // for admin or super-admin
+          return subscriptionPack['role']
+        }
+      }
+      // no subscription but logged-in user
+      return LoggedInUserRole
+    }
+    return AnonymousRole
+  } catch (e) {
+    return AnonymousRole
+  }
+}
+module.exports.getUserRole = getUserRole
+
+let isUserHasActionPermission = async (context, userRole) => {
+  try {
+    let serviceName = context.service.options.name
+    let resourceIds = context.params.resourceIds
+    let registerdRoleIds = context.params.registerdRoleIds
+
+    let roleId = registerdRoleIds[userRole] ? registerdRoleIds[userRole] : 'Anonymous'
+    userRole = userRole.toLowerCase()
+    let resourcePermission = await checkResourcePermission(resourceIds[serviceName] + '_' + context.method, 'global', roleId)
+
+    console.log('=============resourcePermission=', resourcePermission)
+    if (resourcePermission['data'] && resourcePermission['data']['accessValue'] > 0) {
+      return true
+    }
+    return false
+  } catch (e) {
+    return false
+  }
+}
+module.exports.isUserHasActionPermission = isUserHasActionPermission
+
+let checkResourcePermission = async function (resourceId, tasktype, roleId) {
+  return new Promise(async (resolve, reject) => {
+    let KeyValue = resourcePermissionURL + '/' + moduleResource.moduleName + '/' + tasktype + '/' + roleId + '/' + resourceId
+    var options = {
+      method: 'get',
+      uri: resourcePermissionURL + '/' + moduleResource.moduleName + '/' + tasktype + '/' + roleId + '/' + resourceId
+      // headers: {
+      //   'authorization': authorization
+      // }
+    }
+    console.log("==================" + KeyValue + "==============")
+    let resourcePermission = await Utils.CachedRP(options, {key: KeyValue, timeout: timeouts['checkResourcePermission']})
+    resolve(JSON.parse(resourcePermission))
+  })
+}
+module.exports.checkResourcePermission = checkResourcePermission
+
 // =========================================================================================
 module.exports.featherSubscription = async function (req, res, next) {
-  // console.log('Subscription Request:', req)
-
   if (req.headers.authorization !== undefined) {
-    if (userArr[req.headers.authorization] !== undefined) {
-      req.feathers.userPackageDetails = userArr[req.headers.authorization]
-      req.feathers.moduleName = moduleResource.moduleName
-      req.feathers.registerdRoleIds = moduleResource.registerdRoleIds
-      return next()
-    }
     let userDetail = await isValidAuthToken(req.headers.authorization)
+    req.feathers.moduleName = moduleResource.moduleName
+    req.feathers.resourceIds = moduleResource.registerdIds
+    req.feathers.registerdRoleIds = moduleResource.registerdRoleIds
     if (userDetail !== false) {
-      userArr[req.headers.authorization] = userDetail.data
       req.feathers.userPackageDetails = userDetail.data
-      req.feathers.moduleName = moduleResource.moduleName
-      req.feathers.resourceIds = moduleResource.registerdIds
-      req.feathers.registerdRoleIds = moduleResource.registerdRoleIds
       return next()
     }
-    // if (userDetail === false) {
-    //   res.redirect(401, subscriptionURL)
-    //   return false
-    //   // return next()
-    // }
-    // // console.log('=subscription=2=>' + (req.baseUrl + req._parsedUrl.pathname) + '<==')
-    // // Package details not available
-    // if (userDetail.data.package === undefined || userDetail.data.package.details === undefined) {
-    //   // console.log('planExpire===>')
-    //   res.redirect(401, subscriptionURL)
-    //   return false
-    // }
-    // // console.log('=subscription=3=>')
-    // // check plan expir or not
-    // if (isPlanExpired(userDetail.data.package.expiredOn)) {
-    //   // console.log('planExpire===>')
-    //   res.redirect(403, subscriptionURL)
-    //   return false
-    // }
-    // // console.log('=subscription=4=>')
-    // if (userDetail.data.package !== undefined && userDetail.data.package.details !== undefined) {
-    //   userArr[req.headers.authorization] = userDetail
-    //   req.feathers.userPackageDetails = userDetail.data
-    //   req.feathers.moduleName = moduleResource.moduleName
-    // }
   }
   next()
 }
@@ -504,97 +410,11 @@ let registerDynamicHooks = (appObj, registerModules) => {
                 [actionVal]: actionValidation[actionVal]
               }
             }
-            let objHookPermission = {
-              before: {
-                [actionVal]: isActionPermission
-              }
-            }
-            appObj.service(valIdx).hooks(objHookPermission)
             appObj.service(valIdx).hooks(objHook)
           }
         })
       }
     }
-  }
-}
-
-let isUserHasActionPermission = async (context, userSubscribeObj) => {
-  try {
-    let serviceName = context.service.options.name
-    let moduleName = context.params.moduleName
-    let resourceIds = context.params.resourceIds
-    let registerdRoleIds = context.params.registerdRoleIds
-    let userRole = userSubscribeObj.role[moduleName]
-    userRole = userRole.toLowerCase()
-    let resourcePermission = await checkResourcePermission(resourceIds[serviceName], context.method, registerdRoleIds[userRole])
-    console.log('=============resourcePermission=', resourcePermission)
-    if (resourcePermission['data'] && resourcePermission['data']['accessValue'] > 0) {
-      return true
-    }
-    return false
-  } catch (e) {
-    return false
-  }
-}
-
-module.exports.isUserHasActionPermission = isUserHasActionPermission
-
-let isActionPermission = async (context) => {
-  try {
-    const subscription = require('flowz-subscription')
-    console.log('==================isModulePermission==============', context.params)
-    let subscriptionId = ''
-    let userRole = ''
-    if (context.params.headers.subscriptionid) {
-      console.log('==called direct subscription=>')
-      subscriptionId = context.params.headers.subscriptionid
-    } else if (context.params.headers.siteid) {
-      // get if from website settings
-      console.log('==called site wise subscription=>')
-      let siteDetails = await subscription.getSiteInfo(context.params.headers.siteid)
-      subscriptionId = siteDetails.subscriptionId
-    } else {
-      // get if from website settings
-      console.log('==called user wise subscription=>')
-      let userPackageDetails = context.params.userPackageDetails.package
-      let regExpmainPlan = new RegExp('^default', 'i')
-      let findObj = userPackageDetails.find((o) => { return regExpmainPlan.test(o.type) })
-      if (findObj !== undefined) {
-        subscriptionId = findObj.subscriptionId
-        userRole = findObj.role
-      }
-    }
-    let serviceName = context.service.options.name
-    let moduleName = context.params.moduleName
-    let resourceIds = context.params.resourceIds
-    let registerdRoleIds = context.params.registerdRoleIds
-    console.log("==============resourceIds=====", resourceIds)
-    console.log("==============registerdRoleIds=====", registerdRoleIds)
-    if (context.params.userPackageDetails &&
-        context.params.userPackageDetails.package &&
-        context.params.userPackageDetails.package.length > 0) {
-      let userPackageDetails = context.params.userPackageDetails.package
-      let regExpmainPlan = new RegExp('^' + subscriptionId, 'i')
-      let findObj = userPackageDetails.find((o) => { return regExpmainPlan.test(o.subscriptionId) })
-      if (findObj !== undefined) {
-        if (findObj.role[moduleName])
-        userRole = findObj.role[moduleName]
-      }
-    }
-    userRole = userRole.toLowerCase()
-    userPackageDetails = context.params.userPackageDetails.package
-    console.log('=============subscriptionId=', subscriptionId)
-    let resourcePermission = await subscription.checkResourcePermission(resourceIds[serviceName], context.method, registerdRoleIds[userRole])
-    console.log('=============resourcePermission=', resourcePermission)
-    if (resourcePermission['data'] && resourcePermission['data']['accessValue'] > 0) {
-      return context
-    }
-    context.result = {status: 403, message: 'Access denied for resource'}
-    return context
-  } catch (e) {
-    console.log(e)
-    context.result = {status: 403, message: e.message}
-    return context
   }
 }
 
