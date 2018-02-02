@@ -35,15 +35,12 @@ module.exports = {
   }
 };
 
-var modify = async(function(hook){
-  console.log("***********hook",hook.data)
-  console.log("***********hook",hook.params)
+var modify = async(function(hook) {
   let obj = []
   let oldObj = []
   let id = []
   let flag = true
   let module = hook.data.module.toLowerCase()
-  console.log("module......",module)
 
   var tdata = await(hook.app.service('/register-roles').find({
   query: {
@@ -62,8 +59,6 @@ var modify = async(function(hook){
        oldObj.push({"module":module,"role":role})
      }
   }
-  console.log("==========New Record==",obj);
-  console.log("==========Old Record==",oldObj);
 
   if(tdata.data.length != 0) {
     for(let i=0;i<tdata.data.length;i++) {
