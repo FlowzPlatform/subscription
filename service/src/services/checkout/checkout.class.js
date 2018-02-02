@@ -115,14 +115,11 @@ var createFunction = async (function(data,params) {
         console.log('Valid Token!')
         axios.post(config1.api_url + 'user-subscription', packageObj)
         .then(async res => {
-          let removeIndex = _.findIndex(userDetail.data.package, ["type","default"])
-          delete userDetail.data.package[removeIndex]['type']
           if (userDetail.data.package) {
-            // userDetail.data.package.push({ [res.data.id]: {"subscriptionId": res.data.id, "role": "admin", "type": "default"} })
-            userDetail.data.package[res.data.id] = {"subscriptionId": res.data.id, "role": "admin", "type": "default"}            
+            userDetail.data.package[res.data.id] = {"subscriptionId": res.data.id, "role": "admin"}            
           } else {
             userDetail.data.package={}
-            userDetail.data.package[res.data.id] = {"subscriptionId": res.data.id, "role": "admin", "type": "default"}
+            userDetail.data.package[res.data.id] = {"subscriptionId": res.data.id, "role": "admin"}
           }
           axios.put(config1.update_user_url + u_id, {"package":userDetail.data.package, "defaultSubscriptionId": res.data.id}, config)
           .then(res => {
@@ -149,12 +146,10 @@ var createFunction = async (function(data,params) {
         axios.post(config1.api_url + 'user-subscription', packageObj)
         .then(res => {
           if (userDetail.data.package) {
-            // userDetail.data.package.push({"subscriptionId": res.data.id, "role": "admin", "type": "default"})
-            userDetail.data.package[res.data.id] = {"subscriptionId": res.data.id, "role": "admin", "type": "default"}            
+            userDetail.data.package[res.data.id] = {"subscriptionId": res.data.id, "role": "admin"}            
           } else {
-            // userDetail.data.package = [{"subscriptionId": res.data.id, "role": "admin", "type": "default"}]
             userDetail.data.package={}
-            userDetail.data.package[res.data.id] = {"subscriptionId": res.data.id, "role": "admin", "type": "default"}
+            userDetail.data.package[res.data.id] = {"subscriptionId": res.data.id, "role": "admin"}
           }
           axios.put(config1.update_user_url + u_id, {"package":userDetail.data.package, "defaultSubscriptionId": res.data.id}, config)
           .then(res => {
@@ -203,7 +198,7 @@ let makePackageObj = async (function (subData, trans_id, subscribed, userDetail)
       Object.keys(service).forEach(function(k) {
         detail[module[key][i].module][k] = {}
         for (let j = 0; j < service[k].length; j++) {
-          if (service[k][j].value != 0 || service[k][j].value != '') {
+          if (service[k][j].value != '') {
             let actionVal = parseInt(service[k][j].value)
             detail[module[key][i].module][k][service[k][j].action] = actionVal
           }
