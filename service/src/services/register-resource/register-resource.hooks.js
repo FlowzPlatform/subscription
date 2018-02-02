@@ -1,8 +1,8 @@
 
 const _ = require('lodash');
 var r = require('rethinkdbdash');
-let async = require('asyncawait/async');
-let await = require('asyncawait/await');
+let async = require('asyncawait/async')
+let await = require('asyncawait/await')
 
 module.exports = {
   before: {
@@ -75,7 +75,7 @@ var modify = async(function(hook){
             //  console.log("result....",result)
          });
          hook.data = []
-         hook.result = {"data":"updated"}
+         hook.result = {"data":"updated",'id':id}
     }
     else{
        hook.data = obj
