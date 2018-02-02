@@ -108,9 +108,7 @@ var createFunction = async (function(data,params) {
   } else {
     console.log('payment Successfully Done!')
     let userDetail = await (getUserPackage(config.headers.authorization))
-    //console.log('userDetail', userDetail)
     if (userDetail != null) {
-      // console.log('userDetail......', userDetail.data)
       if(userDetail.data.hasOwnProperty("package")){
         var packageObj = await (makePackageObj(thisSubscription, checkout_res.id, userDetail.data.package, userDetail))
         var u_id = userDetail.data._id
@@ -119,13 +117,14 @@ var createFunction = async (function(data,params) {
         .then(async res => {
           let removeIndex = _.findIndex(userDetail.data.package, ["type","default"])
           delete userDetail.data.package[removeIndex]['type']
-
           if (userDetail.data.package) {
-            userDetail.data.package.push({"subscriptionId": res.data.id, "role": "admin", "type": "default"})
+            // userDetail.data.package.push({ [res.data.id]: {"subscriptionId": res.data.id, "role": "admin", "type": "default"} })
+            userDetail.data.package[res.data.id] = {"subscriptionId": res.data.id, "role": "admin", "type": "default"}            
           } else {
-            userDetail.data.package = [{"subscriptionId": res.data.id, "role": "admin", "type": "default"}]
+            userDetail.data.package={}
+            userDetail.data.package[res.data.id] = {"subscriptionId": res.data.id, "role": "admin", "type": "default"}
           }
-          axios.put(config1.update_user_url + u_id, {"package":userDetail.data.package}, config)
+          axios.put(config1.update_user_url + u_id, {"package":userDetail.data.package, "defaultSubscriptionId": res.data.id}, config)
           .then(res => {
             console.log('User ',  u_id, ' has subscribed  package successfully..!')
           })
@@ -150,11 +149,14 @@ var createFunction = async (function(data,params) {
         axios.post(config1.api_url + 'user-subscription', packageObj)
         .then(res => {
           if (userDetail.data.package) {
-            userDetail.data.package.push({"subscriptionId": res.data.id, "role": "admin", "type": "default"})
+            // userDetail.data.package.push({"subscriptionId": res.data.id, "role": "admin", "type": "default"})
+            userDetail.data.package[res.data.id] = {"subscriptionId": res.data.id, "role": "admin", "type": "default"}            
           } else {
-            userDetail.data.package = [{"subscriptionId": res.data.id, "role": "admin", "type": "default"}]
+            // userDetail.data.package = [{"subscriptionId": res.data.id, "role": "admin", "type": "default"}]
+            userDetail.data.package={}
+            userDetail.data.package[res.data.id] = {"subscriptionId": res.data.id, "role": "admin", "type": "default"}
           }
-          axios.put(config1.update_user_url + u_id, {"package":userDetail.data.package}, config)
+          axios.put(config1.update_user_url + u_id, {"package":userDetail.data.package, "defaultSubscriptionId": res.data.id}, config)
           .then(res => {
             console.log('User ',  u_id, ' has subscribed  package successfully..!')
           })
@@ -173,8 +175,6 @@ var createFunction = async (function(data,params) {
           console.log("Error : ", err)
         })
       }
-
-      // console.log('>>>>>>>>>>>>>>>>>>>>>>>>>>>..', _resConfirm.data)
     } else {
       console.log('Not Valid Token!')
     }
