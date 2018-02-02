@@ -116,7 +116,15 @@ var createFunction = async (function(data,params) {
         axios.post(config1.api_url + 'user-subscription', packageObj)
         .then(async res => {
           if (userDetail.data.package) {
-            userDetail.data.package[res.data.id] = {"subscriptionId": res.data.id, "role": "admin"}            
+            // if (Array.isArray(userDetail.data.package)) {
+            //   let arrToObj = {}
+            //   for (var i = 0; i < userDetail.data.package.length; ++i)
+            //     arrToObj[i] = userDetail.data.package[i]
+            //   userDetail.data.package = arrToObj
+            //   userDetail.data.package[res.data.id] = {"subscriptionId": res.data.id, "role": "admin"}
+            // } else {
+              userDetail.data.package[res.data.id] = {"subscriptionId": res.data.id, "role": "admin"}            
+            // }
           } else {
             userDetail.data.package={}
             userDetail.data.package[res.data.id] = {"subscriptionId": res.data.id, "role": "admin"}
@@ -146,7 +154,15 @@ var createFunction = async (function(data,params) {
         axios.post(config1.api_url + 'user-subscription', packageObj)
         .then(res => {
           if (userDetail.data.package) {
-            userDetail.data.package[res.data.id] = {"subscriptionId": res.data.id, "role": "admin"}            
+            // if (Array.isArray(userDetail.data.package)) {
+            //   let arrToObj = {}
+            //   for (var i = 0; i < userDetail.data.package.length; ++i)
+            //     arrToObj[i] = userDetail.data.package[i]
+            //   userDetail.data.package = arrToObj
+            //   userDetail.data.package[res.data.id] = {"subscriptionId": res.data.id, "role": "admin"}
+            // } else {
+              userDetail.data.package[res.data.id] = {"subscriptionId": res.data.id, "role": "admin"}            
+            // }
           } else {
             userDetail.data.package={}
             userDetail.data.package[res.data.id] = {"subscriptionId": res.data.id, "role": "admin"}
@@ -198,7 +214,7 @@ let makePackageObj = async (function (subData, trans_id, subscribed, userDetail)
       Object.keys(service).forEach(function(k) {
         detail[module[key][i].module][k] = {}
         for (let j = 0; j < service[k].length; j++) {
-          if (service[k][j].value != '') {
+          if (service[k][j].value !== '') {
             let actionVal = parseInt(service[k][j].value)
             detail[module[key][i].module][k][service[k][j].action] = actionVal
           }
@@ -210,6 +226,7 @@ let makePackageObj = async (function (subData, trans_id, subscribed, userDetail)
     }
   })
 
+  // console.log('==>', JSON.stringify(detail))
   return {
     userId: userDetail.data._id,
     expiredOn : exdate,
@@ -221,7 +238,6 @@ let makePackageObj = async (function (subData, trans_id, subscribed, userDetail)
     time_unit: subData.time_unit,
     validity: subData.validity
   }
-  // console.log('==>', JSON.stringify(package))
 })
 
 let getUserPackage = async function (authorization) {
