@@ -1,5 +1,4 @@
 let Utils = require('./Utils.js')
-let rp = require('request-promise')
 let domainKey = 'localhost'
 let protocol = 'https'
 if (process.env['domainKey'] !== undefined && process.env['domainKey'] !== '') {
@@ -7,7 +6,7 @@ if (process.env['domainKey'] !== undefined && process.env['domainKey'] !== '') {
 }
 
 const timeouts = {
-  'checkResourcePermission': 3600,
+  'checkResourcePermission': 0,
   'getUserPackage': 7200,
   'getRegisterRole': 86400,
   'getUserSubscription': 86400,
@@ -98,7 +97,7 @@ let getUserPackage = async function (authorization) {
       }
     }
     let userDetail = await Utils.CachedRP(options, {key: KeyValue, timeout: timeouts['getUserPackage']})
-    console.log(userDetail)
+    // console.log(userDetail)
     resolve(JSON.parse(userDetail))
   })
 }
@@ -219,13 +218,14 @@ module.exports.getUserSubscription = async function (subscriptionId) {
 
 // =============================feather Subscription=========================================
 let commonActionValidation = async (context) => {
+  const errors = require('@feathersjs/errors');
   try {
     const subscription = require('flowz-subscription')
     console.log('==================Subscription Start==============')
     let subscriptionId = ''
     let userDetails = ''
     if (context.params.headers.subscriptionid) {
-      console.log('==called direct subscription=>')
+      // console.log('==called direct subscription=>')
       subscriptionId = context.params.headers.subscriptionid
     } else if (context.params.headers.siteid) {
       // get if from website settings
@@ -241,11 +241,12 @@ let commonActionValidation = async (context) => {
     }
     console.log('=============subscriptionId=', subscriptionId)
     let userSubscriptionDetails = await subscription.getUserSubscription(subscriptionId)
-    console.log('=============userSubscriptionDetails=', userSubscriptionDetails)
+    // console.log('=============userSubscriptionDetails=', userSubscriptionDetails)
     // check subscription plan expired or not
     if (userSubscriptionDetails && subscription.isPlanExpired(userSubscriptionDetails.expiredOn) === true) {
       context.result = {status: 403, message: 'subscription package expired'}
-      return context
+      throw new errors.Forbidden('subscription package expired')
+      // return context
     }
 
     let moduleName = context.params.moduleName
@@ -253,13 +254,14 @@ let commonActionValidation = async (context) => {
     console.log('=============userRole=', userRole)
     if (await subscription.isUserHasActionPermission(context, userRole) === false) {
       context.result = {status: 403, message: 'Access denied for action'}
-      return context
+      throw new errors.Forbidden('Permission not available for action')
+      // return context
     }
 
     if (userSubscriptionDetails && userSubscriptionDetails.details !== undefined) {
       console.log('=============userSubscriptionDetails.details=', userSubscriptionDetails.details)
       let userPackageDetails = userSubscriptionDetails.details
-      let serviceName = context.service.options.name
+      let serviceName = context.path
       if (userPackageDetails[moduleName]) {
         if (userPackageDetails[moduleName][serviceName] !== undefined &&
             userPackageDetails[moduleName][serviceName][context.method] !== undefined) {
@@ -268,19 +270,23 @@ let commonActionValidation = async (context) => {
           })
           if (data.total !== undefined &&
             data.total > userPackageDetails[moduleName][serviceName][context.method]) {
-            context.result = {status: 403, message: 'Access denied'}
-            return context
+            throw new errors.Forbidden('Access denied, your subscription limit over')
+            // context.result = {status: 403, message: 'Access denied, your subscription limit over'}
+            // return context
           } else {
             return context
           }
         }
       }
+    } else {
+      context.result = {status: 403, message: 'Access denied, please contact to administrator'}
+      throw new errors.Forbidden('Access denied, please contact to administrator')
     }
-    // context.result = {status: 403, message: 'Access denied'}
     return context
   } catch (e) {
-    console.log(e)
+    if (e.name === 'Forbidden') throw e
     context.result = {status: 403, message: e.message}
+    return context
   }
 }
 // find: get: create: update: patch: remove:
@@ -345,7 +351,7 @@ module.exports.getUserRole = getUserRole
 
 let isUserHasActionPermission = async (context, userRole) => {
   try {
-    let serviceName = context.service.options.name
+    let serviceName = context.path
     let resourceIds = context.params.resourceIds
     let registerdRoleIds = context.params.registerdRoleIds
 
@@ -353,7 +359,7 @@ let isUserHasActionPermission = async (context, userRole) => {
     userRole = userRole.toLowerCase()
     let resourcePermission = await checkResourcePermission(resourceIds[serviceName] + '_' + context.method, 'global', roleId)
 
-    console.log('=============resourcePermission=', resourcePermission)
+    // console.log('=============resourcePermission=', resourcePermission)
     if (resourcePermission['data'] && resourcePermission['data']['accessValue'] > 0) {
       return true
     }
@@ -374,7 +380,7 @@ let checkResourcePermission = async function (resourceId, tasktype, roleId) {
       //   'authorization': authorization
       // }
     }
-    console.log("==================" + KeyValue + "==============")
+    // console.log("==================" + KeyValue + "==============")
     let resourcePermission = await Utils.CachedRP(options, {key: KeyValue, timeout: timeouts['checkResourcePermission']})
     resolve(JSON.parse(resourcePermission))
   })
@@ -383,11 +389,15 @@ module.exports.checkResourcePermission = checkResourcePermission
 
 // =========================================================================================
 module.exports.featherSubscription = async function (req, res, next) {
+  if (req.feathers === undefined) {
+    req.feathers = {}
+  }
+  req.feathers.moduleName = moduleResource.moduleName
+  req.feathers.resourceIds = moduleResource.registerdIds
+  req.feathers.registerdRoleIds = moduleResource.registerdRoleIds
+  req.feathers.headers = req.headers
   if (req.headers.authorization !== undefined) {
     let userDetail = await isValidAuthToken(req.headers.authorization)
-    req.feathers.moduleName = moduleResource.moduleName
-    req.feathers.resourceIds = moduleResource.registerdIds
-    req.feathers.registerdRoleIds = moduleResource.registerdRoleIds
     if (userDetail !== false) {
       req.feathers.userPackageDetails = userDetail.data
       return next()
