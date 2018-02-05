@@ -4,7 +4,9 @@ let await = require('asyncawait/await');
 module.exports = {
   before: {
     all: [],
-    find: [],
+    find: [
+      hook => find2(hook)
+    ],
     get: [],
     create: [
      hook => modify(hook)
@@ -34,6 +36,11 @@ module.exports = {
     remove: []
   }
 };
+
+var find2 = async(function(hook) {
+  hook.params.paginate = {default: 1000, max: 1000 }
+})
+
 
 var modify = async(function(hook) {
   let obj = []

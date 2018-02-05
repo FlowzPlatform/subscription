@@ -87,7 +87,8 @@ var modify = async(function(hook){
  }
 })
 
-var find2 = async(function(hook){
+var find2 = async(function(hook) {
+  hook.params.paginate = {default: 1000, max: 1000 }
   if(hook.params.query != undefined){
     // console.log("called....")
   if(hook.params.query.method  && hook.params.query.route && hook.params.query.module){
