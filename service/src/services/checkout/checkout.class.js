@@ -5,7 +5,8 @@ let async = require('asyncawait/async');
 let await = require('asyncawait/await');
 let rp = require('request-promise')
 let config = require('config')
-const config1 = require('../../../config/default.json');
+// const config1 = require('../../../config/default.json');
+const config1 = require('../../../config/production.json');
 var moment = require('moment');
 moment().format();
 let baseURL = 'http://' + config1.host + ':' + config1.port
@@ -123,7 +124,7 @@ var createFunction = async (function(data,params) {
             //   userDetail.data.package = arrToObj
             //   userDetail.data.package[res.data.id] = {"subscriptionId": res.data.id, "role": "admin"}
             // } else {
-              userDetail.data.package[res.data.id] = {"subscriptionId": res.data.id, "role": "admin"}            
+              userDetail.data.package[res.data.id] = {"subscriptionId": res.data.id, "role": "admin"}
             // }
           } else {
             userDetail.data.package={}
@@ -161,7 +162,7 @@ var createFunction = async (function(data,params) {
             //   userDetail.data.package = arrToObj
             //   userDetail.data.package[res.data.id] = {"subscriptionId": res.data.id, "role": "admin"}
             // } else {
-              userDetail.data.package[res.data.id] = {"subscriptionId": res.data.id, "role": "admin"}            
+              userDetail.data.package[res.data.id] = {"subscriptionId": res.data.id, "role": "admin"}
             // }
           } else {
             userDetail.data.package={}
@@ -199,7 +200,7 @@ let makePackageObj = async (function (subData, trans_id, subscribed, userDetail)
     if(moment(subscribed.expiredOn).diff(moment().format(), 'days') <= 0) {
       exdate = moment().add(subData.validity, 'days').format()
     } else {
-      exdate = moment(subscribed.expiredOn).add(subData.validity, 'days').format()    
+      exdate = moment(subscribed.expiredOn).add(subData.validity, 'days').format()
     }
   } else {
     exdate = moment().add(subData.validity, 'days').format()

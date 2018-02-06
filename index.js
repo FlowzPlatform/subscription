@@ -269,7 +269,7 @@ let commonActionValidation = async (context) => {
             query: {'subscriptionId': subscriptionId}
           })
           if (data.total !== undefined &&
-            data.total > userPackageDetails[moduleName][serviceName][context.method]) {
+            data.total >= userPackageDetails[moduleName][serviceName][context.method]) {
             throw new errors.Forbidden('Access denied, your subscription limit over')
             // context.result = {status: 403, message: 'Access denied, your subscription limit over'}
             // return context
