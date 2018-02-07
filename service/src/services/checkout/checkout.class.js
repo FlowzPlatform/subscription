@@ -5,8 +5,12 @@ let async = require('asyncawait/async');
 let await = require('asyncawait/await');
 let rp = require('request-promise')
 let config = require('config')
-// const config1 = require('../../../config/default.json');
-const config1 = require('../../../config/production.json');
+let config1
+if (process.env.NODE_ENV !== 'production') {
+  config1 = require('../../../config/default.json');
+} else {
+  config1 = require('../../../config/production.json');
+}
 var moment = require('moment');
 moment().format();
 let baseURL = 'http://' + config1.host + ':' + config1.port
@@ -116,6 +120,7 @@ var createFunction = async (function(data,params) {
         console.log('Valid Token!')
         axios.post(config1.api_url + 'user-subscription', packageObj)
         .then(async res => {
+          let planName = res.data.id.substr(res.data.id.length - 5) + "-" +  packageObj.name + "-" + moment(packageObj.expiredOn).format('MM-DD-YYYY')
           if (userDetail.data.package) {
             // if (Array.isArray(userDetail.data.package)) {
             //   let arrToObj = {}
@@ -124,11 +129,11 @@ var createFunction = async (function(data,params) {
             //   userDetail.data.package = arrToObj
             //   userDetail.data.package[res.data.id] = {"subscriptionId": res.data.id, "role": "admin"}
             // } else {
-              userDetail.data.package[res.data.id] = {"subscriptionId": res.data.id, "role": "admin"}
+              userDetail.data.package[res.data.id] = {"subscriptionId": res.data.id, "role": "admin", "name": planName}
             // }
           } else {
             userDetail.data.package={}
-            userDetail.data.package[res.data.id] = {"subscriptionId": res.data.id, "role": "admin"}
+            userDetail.data.package[res.data.id] = {"subscriptionId": res.data.id, "role": "admin", "name": planName}
           }
           axios.put(config1.update_user_url + u_id, {"package":userDetail.data.package, "defaultSubscriptionId": res.data.id}, config)
           .then(res => {
@@ -154,6 +159,7 @@ var createFunction = async (function(data,params) {
         var u_id = userDetail.data._id
         axios.post(config1.api_url + 'user-subscription', packageObj)
         .then(res => {
+          let planName = res.data.id.substr(res.data.id.length - 5) + "-" +  packageObj.name + "-" + moment(packageObj.expiredOn).format('MM-DD-YYYY')
           if (userDetail.data.package) {
             // if (Array.isArray(userDetail.data.package)) {
             //   let arrToObj = {}
@@ -162,11 +168,11 @@ var createFunction = async (function(data,params) {
             //   userDetail.data.package = arrToObj
             //   userDetail.data.package[res.data.id] = {"subscriptionId": res.data.id, "role": "admin"}
             // } else {
-              userDetail.data.package[res.data.id] = {"subscriptionId": res.data.id, "role": "admin"}
+              userDetail.data.package[res.data.id] = {"subscriptionId": res.data.id, "role": "admin", "name": planName}
             // }
           } else {
             userDetail.data.package={}
-            userDetail.data.package[res.data.id] = {"subscriptionId": res.data.id, "role": "admin"}
+            userDetail.data.package[res.data.id] = {"subscriptionId": res.data.id, "role": "admin", "name": planName}
           }
           axios.put(config1.update_user_url + u_id, {"package":userDetail.data.package, "defaultSubscriptionId": res.data.id}, config)
           .then(res => {
