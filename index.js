@@ -245,7 +245,7 @@ let commonActionValidation = async (context) => {
     // check subscription plan expired or not
     if (userSubscriptionDetails && subscription.isPlanExpired(userSubscriptionDetails.expiredOn) === true) {
       context.result = {status: 403, message: 'subscription package expired'}
-      throw new errors.Forbidden('subscription package expired')
+      throw new errors.Forbidden('subscription package expired', {errorCode: 'ERR-SUBSCRIPTION-EXPIRED'})
       // return context
     }
 
@@ -254,7 +254,7 @@ let commonActionValidation = async (context) => {
     console.log('=============userRole=', userRole)
     if (await subscription.isUserHasActionPermission(context, userRole) === false) {
       context.result = {status: 403, message: 'Access denied for action'}
-      throw new errors.Forbidden('Permission not available for action')
+      throw new errors.Forbidden('Permission not available for action', {errorCode: 'ERR-PERMISSION'})
       // return context
     }
 
@@ -270,7 +270,7 @@ let commonActionValidation = async (context) => {
           })
           if (data.total !== undefined &&
             data.total >= userPackageDetails[moduleName][serviceName][context.method]) {
-            throw new errors.Forbidden('Access denied, your subscription limit over')
+            throw new errors.Forbidden('Access denied, your subscription limit over', {errorCode: 'ERR-LIMIT-OVER'})
             // context.result = {status: 403, message: 'Access denied, your subscription limit over'}
             // return context
           } else {
@@ -280,7 +280,7 @@ let commonActionValidation = async (context) => {
       }
     } else {
       context.result = {status: 403, message: 'Access denied, please contact to administrator'}
-      throw new errors.Forbidden('Access denied, please contact to administrator')
+      throw new errors.Forbidden('Access denied, please contact to administrator', {errorCode: 'ERR-NO-SUBSCRIPTION'})
     }
     return context
   } catch (e) {
