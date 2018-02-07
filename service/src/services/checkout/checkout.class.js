@@ -6,11 +6,11 @@ let await = require('asyncawait/await');
 let rp = require('request-promise')
 let config = require('config')
 let config1
-if (process.env.NODE_ENV !== 'production') {
-  config1 = require('../../../config/default.json');
-} else {
-  config1 = require('../../../config/production.json');
-}
+// if (process.env.NODE_ENV !== 'production') {
+//   config1 = require('../../../config/default.json');
+// } else {
+config1 = require('../../../config/production.json');
+// }
 var moment = require('moment');
 moment().format();
 let baseURL = 'http://' + config1.host + ':' + config1.port
