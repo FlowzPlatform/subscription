@@ -6,7 +6,7 @@ const feathersErrors = require('feathers-errors');
 const errors = feathersErrors.errors;
 
 let domainKey = process.env.domainKey;
-let baseUrl = "https://api."+domainKey;
+let baseUrl = "http://api."+domainKey;
 
 let schemaName = {
   "properties": {
