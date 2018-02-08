@@ -3,11 +3,17 @@
 module.exports = {
   before: {
     all: [],
-    find: [],
+    find: [
+      hook => before_find (hook)
+    ],
     get: [],
-    create: [],
+    create: [
+      hook => before_create(hook)
+    ],
     update: [],
-    patch: [],
+    patch: [
+      hook => before_patch(hook)
+    ],
     remove: []
   },
 
@@ -31,3 +37,21 @@ module.exports = {
     remove: []
   }
 };
+
+
+function before_create(hook) {
+  hook.data.assignDate = new Date();
+  hook.data.isDeleted = false;
+}
+
+
+function before_find(hook) {
+ 
+  hook.params.query.isDeleted = false;  
+}
+
+
+function before_patch(hook) {
+  
+  hook.data.unassignDate = new Date(); 
+}
