@@ -89,8 +89,8 @@ class Service {
                     }
                 })
                 .then(async (result) => {
-                  self.sendEmail(data , res);
                   let subscription_invite = await self.subscription_invitation(data , res )
+                  self.sendEmail(data , res);
                   resolve(result.data)
                 }).catch(function (err){
                   let errorObj = {};
@@ -127,8 +127,8 @@ async subscription_invitation(data , res) {
   })
 }
 
-  async sendEmail(data , res){
-    await axios({
+ sendEmail(data , res){
+   axios({
         method: 'post',
         url: baseUrl+'/vmailmicro/sendEmail',
         headers: {'Authorization': apiHeaders.authorization},
@@ -161,6 +161,7 @@ async subscription_invitation(data , res) {
   }
 
   remove (id, params) {
+    console.log(params)
     return Promise.resolve({ id });
   }
 }
