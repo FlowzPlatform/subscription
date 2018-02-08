@@ -292,7 +292,11 @@ let commonActionValidation = async (context) => {
 // find: get: create: update: patch: remove:
 let actionValidation = {
   'create': commonActionValidation,
-  'remove': commonActionValidation
+  'remove': commonActionValidation,
+  'find': commonActionValidation,
+  'update': commonActionValidation,
+  'patch': commonActionValidation,
+  'get': commonActionValidation
   // "remove": () => {},
 }
 
