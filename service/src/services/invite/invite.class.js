@@ -6,7 +6,7 @@ const feathersErrors = require('feathers-errors');
 const errors = feathersErrors.errors;
 
 let domainKey = process.env.domainKey;
-let baseUrl = "http://api."+domainKey;
+let baseUrl = "https://api."+domainKey;
 
 let schemaName = {
   "properties": {
@@ -80,6 +80,7 @@ class Service {
             }
             
           }
+        console.log(" apiHeaders.authorization", apiHeaders.authorization)
           axios.put(baseUrl+'/user/updateuserdetails/' + userId, {
                       package: previous_packages
                 }, {
@@ -88,6 +89,7 @@ class Service {
                     }
                 })
                 .then(async (result) => {
+                  console.log("result.....".result)
                   self.sendEmail(data , res);
                   let subscription_invite = await self.subscription_invitation(data , res )
                   resolve(result.data)
@@ -113,6 +115,7 @@ class Service {
           // userId = res.data.data[0]._id;
           // previous_packages = res.data.data[0].package
       }).catch(function(err){
+        console.log("err....................... ",err)
         let errorObj = {};
         errorObj.statusText = "Not Found";
         errorObj.status = 404;
