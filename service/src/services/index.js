@@ -9,6 +9,8 @@ const userSubscription = require('./user-subscription/user-subscription.service.
 const reverseSubscription = require('./reverse-subscription/reverse-subscription.service.js');
 const invite = require('./invite/invite.service.js');
 
+const subscriptionInvitation = require('./subscription-invitation/subscription-invitation.service.js');
+
 module.exports = function () {
   const app = this; // eslint-disable-line no-unused-vars
   app.configure(defaultSubscription);
@@ -21,4 +23,5 @@ module.exports = function () {
   app.configure(userSubscription);
   app.configure(reverseSubscription);
   app.configure(invite);
+  app.configure(subscriptionInvitation);
 };

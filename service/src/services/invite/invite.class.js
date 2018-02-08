@@ -10,7 +10,11 @@ let baseUrl = "http://api."+domainKey;
 
 let schemaName = {
   "properties": {
-      "email": {
+      "fromEmail": {
+        "type": "string"
+
+      },
+      "toEmail": {
           "type": "string"
           
       },
@@ -22,13 +26,17 @@ let schemaName = {
           "description": "role"
       }
   },
-  "required": ["email" ,  "subscriptionId" , "role"],
+  "required": ["fromEmail", "toEmail" ,  "subscriptionId" , "role"],
    "additionalProperties": true
 }
 
 class Service {
   constructor (options) {
     this.options = options || {};
+  }
+
+  setup(app){
+    this.app = app
   }
 
   find (params) {
@@ -52,7 +60,7 @@ class Service {
     let self = this;
     return new Promise(function(resolve , reject ){
       axios.post(baseUrl+'/auth/api/userdetailsbyemail', {
-          "email": data.email
+        "email": data.toEmail
       })
       .then(async (res) => {
           userId = res.data.data[0]._id;
@@ -81,6 +89,7 @@ class Service {
                 })
                 .then(async (result) => {
                   self.sendEmail(data , res);
+                  let subscription_invite = await self.subscription_invitation(data , res )
                   resolve(result.data)
                 }).catch(function (err){
                   let errorObj = {};
@@ -90,7 +99,7 @@ class Service {
                     errorObj.data = "'Auth token is required in header'";
                     resolve (errorObj)
                   }else{
-                    
+                    console.log(err)
                     errorObj.statusText = err.response.statusText;
                     errorObj.status = err.response.status;
                     errorObj.data = err.response.data;
@@ -115,6 +124,13 @@ class Service {
     
   }
 
+async subscription_invitation(data , res) {
+  console.log("data.......... from class", data)
+  this.app.service("subscription-invitation").create(data).then(function (response){
+    console.log("response",response)
+  })
+}
+
   sendEmail(data , res){
     axios({
         method: 'post',
@@ -122,13 +138,13 @@ class Service {
         headers: {'Authorization': apiHeaders.authorization}
     })
     .then(async (result) => {
-      console.log("receiveEmail Data " , res.data.data[0].email)
-      console.log("sendEmail Data " , result.data.data.email)
+      console.log("receiveEmail Data ", res.data.data[0].fromEmail)
+      console.log("sendEmail Data ", result.data.data.toEmail)
       axios({
           method: 'post',
           url: baseUrl+'/vmailmicro/sendEmail',
           headers: {'Authorization': apiHeaders.authorization},
-          data : {"to":result.data.data.email,"from":res.data.data[0].email,"subject":"Invitation from Flowz","body":"Dear "+ res.data.data[0].username+", You have been invited by "+ result.data.data.email +"to Flowz"}
+        data: { "to": result.data.data.toEmail,"from":res.data.data[0].fromEmail,"subject":"Invitation from Flowz","body":"Dear "+ res.data.data[0].username+", You have been invited by "+ result.data.data.fromEmail +"to Flowz"}
       }).then(async (result) => {
         return true;
       }).catch(function(err){
