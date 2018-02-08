@@ -80,7 +80,7 @@ class Service {
             }
             
           }
-        console.log(" apiHeaders.authorization", apiHeaders.authorization)
+
           axios.put(baseUrl+'/user/updateuserdetails/' + userId, {
                       package: previous_packages
                 }, {
@@ -89,7 +89,6 @@ class Service {
                     }
                 })
                 .then(async (result) => {
-                  console.log("result.....".result)
                   self.sendEmail(data , res);
                   let subscription_invite = await self.subscription_invitation(data , res )
                   resolve(result.data)
@@ -110,12 +109,7 @@ class Service {
                   }
                   
                 })
-          
-          
-          // userId = res.data.data[0]._id;
-          // previous_packages = res.data.data[0].package
       }).catch(function(err){
-        console.log("err....................... ",err)
         let errorObj = {};
         errorObj.statusText = "Not Found";
         errorObj.status = 404;
@@ -128,39 +122,24 @@ class Service {
   }
 
 async subscription_invitation(data , res) {
-  console.log("data.......... from class", data)
   this.app.service("subscription-invitation").create(data).then(function (response){
     console.log("response",response)
   })
 }
 
-  sendEmail(data , res){
-    axios({
+  async sendEmail(data , res){
+    await axios({
         method: 'post',
-        url: baseUrl+'/auth/api/userdetails',
-        headers: {'Authorization': apiHeaders.authorization}
-    })
-    .then(async (result) => {
-      console.log("receiveEmail Data ", res.data.data[0].fromEmail)
-      console.log("sendEmail Data ", result.data.data.toEmail)
-      axios({
-          method: 'post',
-          url: baseUrl+'/vmailmicro/sendEmail',
-          headers: {'Authorization': apiHeaders.authorization},
-        data: { "to": result.data.data.toEmail,"from":res.data.data[0].fromEmail,"subject":"Invitation from Flowz","body":"Dear "+ res.data.data[0].username+", You have been invited by "+ result.data.data.fromEmail +"to Flowz"}
-      }).then(async (result) => {
-        return true;
-      }).catch(function(err){
-        console.log("err.response")
-        console.log(err.response)
-      })
-      
+        url: baseUrl+'/vmailmicro/sendEmail',
+        headers: {'Authorization': apiHeaders.authorization},
+      data: { "to": data.toEmail,"from":data.fromEmail,"subject":"Invitation from Flowz","body":"You have been invited by "+ data.fromEmail +"to Flowz"}
+    }).then(async (result) => {
+      console.log("result", result)
+      return true;
     }).catch(function(err){
-     
+      console.log("err.response")
       console.log(err.response)
     })
-
-    
   }
 
   validateSchema(data, schemaName) {
