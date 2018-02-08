@@ -47,7 +47,7 @@ class Service {
   }
 
   create (data, params) {
-    var res = createFunction(data,params)
+    var res = createFunction(data,params, params.app)
     return Promise.resolve(res);
   }
 
@@ -82,14 +82,20 @@ var payObj = async( function (data, price) {
     return sObj
 })
 
-var getThisSubscription = async(function (id) {
-  var res = await (axios.get(baseURL + '/subscription-plans/' + id))
-  return res.data
+var getThisSubscription = async(function (id, app) {
+  // var res = await (axios.get(baseURL + '/subscription-plans/' + id))
+  return app.service('subscription-plans').get(id)
+  .then(res => {
+    return res
+  })
+  .catch(err => {
+    console.log('Error in checkout at getThisSubscription:', err)
+  })
 })
 
-var createFunction = async (function(data,params) {
+var createFunction = async (function(data,params, app) {
   // console.log("+++++++++++ params",params.query.authorization)
-  var thisSubscription = await (getThisSubscription(data.sub_id))
+  var thisSubscription = await (getThisSubscription(data.sub_id, app))
   // console.log('thisSubscription', thisSubscription)
   var paymentObj = await (payObj(data, thisSubscription.price))
   var config = {
@@ -118,7 +124,8 @@ var createFunction = async (function(data,params) {
         var packageObj = await (makePackageObj(thisSubscription, checkout_res.id, userDetail.data.package, userDetail))
         var u_id = userDetail.data._id
         console.log('Valid Token!')
-        axios.post(config1.api_url + 'user-subscription', packageObj)
+        // axios.post(config1.api_url + 'user-subscription', packageObj)
+        app.service('user-subscription').create(packageObj)
         .then(async res => {
           let planName = res.data.id.substr(res.data.id.length - 5) + "-" +  packageObj.name + "-" + moment(packageObj.expiredOn).format('MM-DD-YYYY')
           if (userDetail.data.package) {
@@ -142,7 +149,8 @@ var createFunction = async (function(data,params) {
           .catch(err => {
             console.log("Error : ", err)
           })
-          axios.post(config1.api_url + 'reverse-subscription',{"subscriptionId": res.data.id})
+          // axios.post(config1.api_url + 'reverse-subscription',{"subscriptionId": res.data.id})
+          app.service('reverse-subscription').create({"subscriptionId": res.data.id})
           .then(res => {
             console.log('subscriptionId : ', res.data.subscriptionId)
           })
@@ -157,7 +165,8 @@ var createFunction = async (function(data,params) {
         console.log('Valid Token!')
         var packageObj = await (makePackageObj(thisSubscription, checkout_res.id, null, userDetail))
         var u_id = userDetail.data._id
-        axios.post(config1.api_url + 'user-subscription', packageObj)
+        // axios.post(config1.api_url + 'user-subscription', packageObj)
+        app.service('user-subscription').create(packageObj)
         .then(res => {
           let planName = res.data.id.substr(res.data.id.length - 5) + "-" +  packageObj.name + "-" + moment(packageObj.expiredOn).format('MM-DD-YYYY')
           if (userDetail.data.package) {
@@ -181,7 +190,8 @@ var createFunction = async (function(data,params) {
           .catch(err => {
             console.log("Error : ", err)
           })
-          axios.post(config1.api_url + 'reverse-subscription',{"subscriptionId": res.data.id})
+          // axios.post(config1.api_url + 'reverse-subscription',{"subscriptionId": res.data.id})
+          app.service('reverse-subscription').create({"subscriptionId": res.data.id})
           .then(res => {
             console.log('subscriptionId : ', res.data.subscriptionId)
           })
