@@ -90,7 +90,7 @@ class Service {
                 })
                 .then(async (result) => {
                   let subscription_invite = await self.subscription_invitation(data , res )
-                  self.sendEmail(data , res);
+                  //self.sendEmail(data , res);
                   resolve(result.data)
                 }).catch(function (err){
                   let errorObj = {};
@@ -127,20 +127,20 @@ async subscription_invitation(data , res) {
   })
 }
 
- sendEmail(data , res){
-   axios({
-        method: 'post',
-        url: baseUrl+'/vmailmicro/sendEmail',
-        headers: {'Authorization': apiHeaders.authorization},
-      data: { "to": data.toEmail,"from":data.fromEmail,"subject":"Invitation from Flowz","body":"You have been invited by "+ data.fromEmail +"to Flowz"}
-    }).then(async (result) => {
-      console.log("result", result)
-      return true;
-    }).catch(function(err){
-      console.log("err.response")
-      console.log(err.response)
-    })
-  }
+//  sendEmail(data , res){
+//    axios({
+//         method: 'post',
+//         url: baseUrl+'/vmailmicro/sendEmail',
+//         headers: {'Authorization': apiHeaders.authorization},
+//       data: { "to": data.toEmail,"from":data.fromEmail,"subject":"Invitation from Flowz","body":"You have been invited by "+ data.fromEmail +"to Flowz"}
+//     }).then(async (result) => {
+//       console.log("result", result)
+//       return true;
+//     }).catch(function(err){
+//       console.log("err.response")
+//       console.log(err.response)
+//     })
+//   }
 
   validateSchema(data, schemaName) {
     
@@ -161,8 +161,27 @@ async subscription_invitation(data , res) {
   }
 
   remove (id, params) {
-    console.log(params)
-    return Promise.resolve({ id });
+    // console.log(params)
+    // return Promise.resolve({ id });
+    axios.patch('http://localhost:3030/subscription-invitation/' + id , {
+      "isDeleted": true
+    }, {
+        headers: {
+          'Authorization': apiHeaders.authorization
+        }
+      })
+      .then(async (result) => {
+        console.log(result)
+      }).catch(function (err) {
+        let errorObj = {};
+        if (apiHeaders.authorization == undefined) { 
+          resolve(errorObj)
+        } else {
+          
+          resolve(errorObj)
+        }
+
+      })
   }
 }
 
