@@ -89,6 +89,7 @@ class Service {
                     }
                 })
                 .then(async (result) => {
+                  console.log("result....  ", result)
                   let subscription_invite = await self.subscription_invitation(data , res )
                   //self.sendEmail(data , res);
                   resolve(result.data)
@@ -110,6 +111,7 @@ class Service {
                   
                 })
       }).catch(function(err){
+        console.log("err........... ", err)
         let errorObj = {};
         errorObj.statusText = "Not Found";
         errorObj.status = 404;
@@ -124,6 +126,8 @@ class Service {
 async subscription_invitation(data , res) {
   this.app.service("subscription-invitation").create(data).then(function (response){
     console.log("response",response)
+  }).catch(function(err){
+      console.log("subscription invitaion error.....", err)
   })
 }
 
