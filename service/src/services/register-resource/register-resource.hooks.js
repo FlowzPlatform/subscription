@@ -1,8 +1,8 @@
 
 const _ = require('lodash');
 var r = require('rethinkdbdash');
-let async = require('asyncawait/async');
-let await = require('asyncawait/await');
+let async = require('asyncawait/async')
+let await = require('asyncawait/await')
 
 module.exports = {
   before: {
@@ -75,7 +75,7 @@ var modify = async(function(hook){
             //  console.log("result....",result)
          });
          hook.data = []
-         hook.result = {"data":"updated"}
+         hook.result = {"data":"updated",'id':id}
     }
     else{
        hook.data = obj
@@ -87,7 +87,8 @@ var modify = async(function(hook){
  }
 })
 
-var find2 = async(function(hook){
+var find2 = async(function(hook) {
+  hook.params.paginate = {default: 1000, max: 1000 }
   if(hook.params.query != undefined){
     // console.log("called....")
   if(hook.params.query.method  && hook.params.query.route && hook.params.query.module){

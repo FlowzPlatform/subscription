@@ -28,7 +28,8 @@
     "mocha": "mocha test/ --recursive"
   },
   "dependencies": {
-    "asyncawait": "^1.0.6",
+    "@feathersjs/errors": "^3.2.2",
+    "asyncawait": "1.0.6",
     "axios": "^0.17.1",
     "body-parser": "^1.18.2",
     "compression": "^1.7.1",
@@ -42,7 +43,9 @@
     "feathers-rest": "^1.8.1",
     "feathers-rethinkdb": "^0.4.3",
     "feathers-socketio": "^2.0.1",
+    "fibers": "^2.0.0",
     "helmet": "^3.9.0",
+    "lodash": "^4.17.4",
     "moment": "^2.20.1",
     "mongodb": "^2.2.33",
     "rethinkdbdash": "^2.3.31",

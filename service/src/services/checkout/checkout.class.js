@@ -1,13 +1,16 @@
 /* eslint-disable no-unused-vars */
 var axios = require('axios')
+let _ = require('lodash')
 let async = require('asyncawait/async');
 let await = require('asyncawait/await');
 let rp = require('request-promise')
 let config = require('config')
-const config1 = require('../../../config/default.json');
+// const config1 = require('../../../config/default.json');
+const config1 = require('../../../config/production.json');
 var moment = require('moment');
 moment().format();
 let baseURL = 'http://' + config1.host + ':' + config1.port
+let app
 
 if (process.env.x_api_token)
     config1.x_api_token = process.env.x_api_token
@@ -17,10 +20,16 @@ if (process.env.update_user_url)
     config1.update_user_url = process.env.update_user_url
 if (process.env.user_detail_url)
     config1.user_detail_url = process.env.user_detail_url
+if (process.env.api_url)
+  config1.api_url = process.env.api_url
 
 class Service {
   constructor (options) {
     this.options = options || {};
+  }
+
+  setup(app){
+    this.app = app;
   }
 
   find (params) {
@@ -88,7 +97,7 @@ var createFunction = async (function(data,params) {
   }
   // console.log(paymentObj)
   var checkout_res = await (axios.post(config1.pay_url, paymentObj, config).then(res => {
-        console.log('payment_response....', res.data)
+        // console.log('payment_response....', res.data)
         return res.data
       })
       .catch(err => {
@@ -100,33 +109,84 @@ var createFunction = async (function(data,params) {
   } else {
     console.log('payment Successfully Done!')
     let userDetail = await (getUserPackage(config.headers.authorization))
-    // console.log('userDetail', userDetail)
     if (userDetail != null) {
-      // console.log('userDetail......', userDetail.data)
       if(userDetail.data.hasOwnProperty("package")){
-        var packageObj = await (makePackageObj(thisSubscription, checkout_res.id))
+        var packageObj = await (makePackageObj(thisSubscription, checkout_res.id, userDetail.data.package, userDetail))
         var u_id = userDetail.data._id
-        if(userDetail.data.hasOwnProperty("package_history")){
-          userDetail.data.package_history.push(userDetail.data.package)
-          console.log('Valid Token! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>.')
-          var _resConfirm = await (axios.put(config1.update_user_url + u_id, {package: packageObj,package_history:userDetail.data.package_history}, config))
-        }
-        else {
-          let package_history = []
-          package_history.push(userDetail.data.package)
-          console.log('Valid Token! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>.')
-          var _resConfirm = await (axios.put(config1.update_user_url + u_id, {package: packageObj,package_history:package_history}, config))
-        }
-      }
-      else {
-        console.log('Valid Token! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>.')
-        var packageObj = await (makePackageObj(thisSubscription, checkout_res.id))
+        console.log('Valid Token!')
+        axios.post(config1.api_url + 'user-subscription', packageObj)
+        .then(async res => {
+          if (userDetail.data.package) {
+            // if (Array.isArray(userDetail.data.package)) {
+            //   let arrToObj = {}
+            //   for (var i = 0; i < userDetail.data.package.length; ++i)
+            //     arrToObj[i] = userDetail.data.package[i]
+            //   userDetail.data.package = arrToObj
+            //   userDetail.data.package[res.data.id] = {"subscriptionId": res.data.id, "role": "admin"}
+            // } else {
+              userDetail.data.package[res.data.id] = {"subscriptionId": res.data.id, "role": "admin"}
+            // }
+          } else {
+            userDetail.data.package={}
+            userDetail.data.package[res.data.id] = {"subscriptionId": res.data.id, "role": "admin"}
+          }
+          axios.put(config1.update_user_url + u_id, {"package":userDetail.data.package, "defaultSubscriptionId": res.data.id}, config)
+          .then(res => {
+            console.log('User ',  u_id, ' has subscribed  package successfully..!')
+          })
+          .catch(err => {
+            console.log("Error : ", err)
+          })
+          axios.post(config1.api_url + 'reverse-subscription',{"subscriptionId": res.data.id})
+          .then(res => {
+            console.log('subscriptionId : ', res.data.subscriptionId)
+          })
+          .catch(err => {
+            console.log("Error : ", err)
+          })
+        })
+        .catch(err => {
+          console.log("Error : ", err)
+        })
+      } else {
+        console.log('Valid Token!')
+        var packageObj = await (makePackageObj(thisSubscription, checkout_res.id, null, userDetail))
         var u_id = userDetail.data._id
-        // console.log('.............', packageObj)
-        var _resConfirm = await (axios.put(config1.update_user_url + u_id, {package: packageObj}, config))
+        axios.post(config1.api_url + 'user-subscription', packageObj)
+        .then(res => {
+          if (userDetail.data.package) {
+            // if (Array.isArray(userDetail.data.package)) {
+            //   let arrToObj = {}
+            //   for (var i = 0; i < userDetail.data.package.length; ++i)
+            //     arrToObj[i] = userDetail.data.package[i]
+            //   userDetail.data.package = arrToObj
+            //   userDetail.data.package[res.data.id] = {"subscriptionId": res.data.id, "role": "admin"}
+            // } else {
+              userDetail.data.package[res.data.id] = {"subscriptionId": res.data.id, "role": "admin"}
+            // }
+          } else {
+            userDetail.data.package={}
+            userDetail.data.package[res.data.id] = {"subscriptionId": res.data.id, "role": "admin"}
+          }
+          axios.put(config1.update_user_url + u_id, {"package":userDetail.data.package, "defaultSubscriptionId": res.data.id}, config)
+          .then(res => {
+            console.log('User ',  u_id, ' has subscribed  package successfully..!')
+          })
+          .catch(err => {
+            console.log("Error : ", err)
+          })
+          axios.post(config1.api_url + 'reverse-subscription',{"subscriptionId": res.data.id})
+          .then(res => {
+            console.log('subscriptionId : ', res.data.subscriptionId)
+          })
+          .catch(err => {
+            console.log("Error : ", err)
+          })
+        })
+        .catch(err => {
+          console.log("Error : ", err)
+        })
       }
-
-      // console.log('>>>>>>>>>>>>>>>>>>>>>>>>>>>..', _resConfirm.data)
     } else {
       console.log('Not Valid Token!')
     }
@@ -134,39 +194,42 @@ var createFunction = async (function(data,params) {
   }
 })
 
-let makePackageObj = async (function (subData, trans_id) {
-  // console.log('....................', subData)
-  var exdate = moment().add(subData.validity, 'days').format()
-  // console.log("new Date().......",exdate)
-  // var date2 =
-  // console.log("date2......",date2)
-  // console.log("subData.validity......",subData.validity)
-  // exdate.setDate(exdate.getDate() + subData.validity)
-  console.log("exdate...........",exdate)
-  var detail = []
-  for(let i=0;i<subData.details.length;i++){
-    let obj = {}
-    obj.module = subData.details[i].module
-    obj.service = subData.details[i].service
-    obj.method = subData.details[i].action
-    obj.route = subData.details[i].url
-    obj.value = subData.details[i].value
-    // console.log("obj.........................",obj)
-    detail.push(obj)
+let makePackageObj = async (function (subData, trans_id, subscribed, userDetail) {
+  var exdate
+  if (subscribed != null) {
+    if(moment(subscribed.expiredOn).diff(moment().format(), 'days') <= 0) {
+      exdate = moment().add(subData.validity, 'days').format()
+    } else {
+      exdate = moment(subscribed.expiredOn).add(subData.validity, 'days').format()
+    }
+  } else {
+    exdate = moment().add(subData.validity, 'days').format()
   }
-  // for(let [inx, _service] of subData.services.entries()) {
-  //   var obj = {}
-  //   obj.service = _service.name
-  //   for(let [i, _route] of _service.routes.entries()) {
-  //     obj.routes = _route.name
-  //     for(let [inxx, mobj] of _route.methods.entries()) {
-  //       obj.method = mobj.name
-  //       obj.value = mobj.value
-  //     }
-  //   }
-  //   detail.push(obj)
-  // }
-  var package = {
+  // console.log("exdate :",exdate)
+  var detail = {}
+  let module = _.groupBy(subData.details, "module")
+  Object.keys(module).forEach(function(key) {
+    let service = _.groupBy(module[key], "service")
+    for (let i = 0; i < module[key].length; i++) {
+      detail[module[key][i].module] = {}
+      Object.keys(service).forEach(function(k) {
+        detail[module[key][i].module][k] = {}
+        for (let j = 0; j < service[k].length; j++) {
+          if (service[k][j].value !== '') {
+            let actionVal = parseInt(service[k][j].value)
+            detail[module[key][i].module][k][service[k][j].action] = actionVal
+          }
+        }
+        if (Object.keys(detail[module[key][i].module][k]).length < 1) {
+        	delete detail[module[key][i].module][k]
+        }
+      })
+    }
+  })
+
+  // console.log('==>', JSON.stringify(detail))
+  return {
+    userId: userDetail.data._id,
     expiredOn : exdate,
     details : detail,
     sub_id : subData.id,
@@ -176,7 +239,6 @@ let makePackageObj = async (function (subData, trans_id) {
     time_unit: subData.time_unit,
     validity: subData.validity
   }
-  return package
 })
 
 let getUserPackage = async function (authorization) {

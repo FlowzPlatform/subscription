@@ -1,6 +1,6 @@
 {
   "name": "flowz-subscription",
-  "version": "0.0.1",
+  "version": "0.1.2",
   "description": "to secure your service ",
   "main": "index.js",
   "scripts": {
