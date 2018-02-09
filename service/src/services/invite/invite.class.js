@@ -4,6 +4,7 @@ const Ajv = require('ajv');
 const ajv = new Ajv();
 const feathersErrors = require('feathers-errors');
 const errors = feathersErrors.errors;
+const _ = require('lodash')
 
 let domainKey = process.env.domainKey;
 let baseUrl = "http://api."+domainKey;
@@ -74,10 +75,23 @@ class Service {
             }
           }
           }else{
-            previous_packages[subscriptionId] = {
+
+            if (previous_packages[subscriptionId] != undefined) {
+              _.forIn(Role1, function (value, key) {
+                previous_packages[subscriptionId].role[key] = value
+              });
+            }else{
+              
+              previous_packages[subscriptionId] = {
                 "subscriptionId": subscriptionId,
                 "role": Role1
+              }
             }
+           
+
+            // previous_packages[subscriptionId].role = _.omit(previous_packages[subscriptionId].role, Role1);
+            
+            
             
           }
 
@@ -90,7 +104,9 @@ class Service {
                 })
                 .then(async (result) => {
                   console.log("result....  ", result)
-                  let subscription_invite = await self.subscription_invitation(data , res )
+                  if (result.data.code == 201) {
+                    let subscription_invite = await self.subscription_invitation(data , res )
+                  }
                   //self.sendEmail(data , res);
                   resolve(result.data)
                 }).catch(function (err){
@@ -131,6 +147,8 @@ async subscription_invitation(data , res) {
   })
 }
 
+  
+
 //  sendEmail(data , res){
 //    axios({
 //         method: 'post',
@@ -164,28 +182,83 @@ async subscription_invitation(data , res) {
     return Promise.resolve(data);
   }
 
-  remove (id, params) {
-    // console.log(params)
-    // return Promise.resolve({ id });
-    axios.patch('http://localhost:3030/subscription-invitation/' + id , {
-      "isDeleted": true
-    }, {
-        headers: {
-          'Authorization': apiHeaders.authorization
-        }
-      })
-      .then(async (result) => {
-        console.log(result)
+  async subscription_invitation_remove(data, res) {
+    console.log(">>>>>>>>>>>>>>>>>>>>>> ", data)
+    console.log(">>>>>>>>>>>>>>>>>>>>>> res", res)
+    this.app.service("subscription-invitation").patch(data.query.subscription_invitation_id, { isDeleted: true }, data.query).then(function (response) {
+        console.log("response", response)
       }).catch(function (err) {
-        let errorObj = {};
-        if (apiHeaders.authorization == undefined) { 
-          resolve(errorObj)
-        } else {
-          
-          resolve(errorObj)
-        }
-
+        console.log("subscription invitaion error.....", err)
       })
+    }
+    
+  remove (id, params) {
+     let previous_packages;
+     let userId;
+    // let module = data.module;
+     let subscriptionId = params.query.subscriptionId;
+     let Role1 = params.query.role;
+    // //this.validateSchema(data, schemaName)
+     let self = this;
+    return new Promise(function (resolve, reject) {
+     // resolve(params)
+      console.log("params " , params)
+      axios.post(baseUrl + '/auth/api/userdetailsbyemail', {
+        "email": params.query.toEmail
+      })
+        .then(async (res) => {
+          userId = res.data.data[0]._id;
+          previous_packages = res.data.data[0].package
+          if (previous_packages == undefined || previous_packages.length == 0) {
+            console.log("This user dose not assigned in this subscription for this role")
+          } else {
+             previous_packages[subscriptionId].role = _.omit(previous_packages[subscriptionId].role, Role1);
+            
+            if (_.isEmpty(previous_packages[subscriptionId].role) == true){
+            
+              delete previous_packages[subscriptionId];
+            
+          }
+        }
+          axios.put(baseUrl + '/user/updateuserdetails/' + userId, {
+            package: previous_packages
+          }, {
+              headers: {
+                'Authorization': apiHeaders.authorization
+              }
+            })
+            .then(async (result) => {
+              console.log("result....  ", result)
+              let subscription_invite = await self.subscription_invitation_remove(params, res)
+              //self.sendEmail(data , res);
+              resolve(result.data)
+            }).catch(function (err) {
+              let errorObj = {};
+              if (apiHeaders.authorization == undefined) {
+                errorObj.statusText = "missing Authorization header";
+                errorObj.status = 404;
+                errorObj.data = "'Auth token is required in header'";
+                resolve(errorObj)
+              } else {
+                console.log(err)
+                errorObj.statusText = err.response.statusText;
+                errorObj.status = err.response.status;
+                errorObj.data = err.response.data;
+
+                resolve(errorObj)
+              }
+
+            })
+        }).catch(function (err) {
+          console.log("err........... ", err)
+          let errorObj = {};
+          errorObj.statusText = "Not Found";
+          errorObj.status = 404;
+          errorObj.data = err.response.data;
+          resolve(errorObj)
+        })
+    })
+
   }
 }
 
