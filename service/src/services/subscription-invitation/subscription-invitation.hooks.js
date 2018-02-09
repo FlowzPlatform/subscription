@@ -19,7 +19,9 @@ module.exports = {
 
   after: {
     all: [],
-    find: [],
+    find: [
+      hook => after_find(hook)
+    ],
     get: [],
     create: [],
     update: [],
@@ -46,12 +48,22 @@ function before_create(hook) {
 
 
 function before_find(hook) {
- 
-  hook.params.query.isDeleted = false;  
+  if (!hook.params.query.isDeleted) {
+    hook.params.query.isDeleted = false;  
+  }else{
+    if (hook.params.query.isDeleted == 'true') {
+      hook.params.query.isDeleted = true
+    } 
+    if (hook.params.query.isDeleted == 'false') {
+      hook.params.query.isDeleted = false
+    }
+  }
 }
 
-
 function before_patch(hook) {
-  
   hook.data.unassignDate = new Date(); 
+}
+
+function after_find(hook) {
+  console.log(hook.params) 
 }
