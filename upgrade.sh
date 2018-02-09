@@ -9,6 +9,7 @@ then
     update_user_url="$update_user_url_master";
     pay_url="$pay_url_master";
     user_detail_url="$user_detail_url_master";
+    DOMAINKEY="$DOMAINKEY_MASTER";
   }
 elif [ "$TRAVIS_BRANCH" = "develop" ]
 then
@@ -21,6 +22,7 @@ then
       update_user_url="$update_user_url_develop";
       pay_url="$pay_url_develop";
       user_detail_url="$user_detail_url_develop";
+      DOMAINKEY="$DOMAINKEY_DEVELOP";
   }
 else
   {
@@ -32,6 +34,7 @@ else
       update_user_url="$update_user_url_qa";
       pay_url="$pay_url_qa";
       user_detail_url="$user_detail_url_qa";
+      DOMAINKEY="$DOMAINKEY_QA";
   }
 fi
 
@@ -43,5 +46,5 @@ curl -u ""$RANCHER_USER":"$RANCHER_PASS"" \
 -H 'Accept: application/json' \
 -H 'Content-Type: application/json' \
 -d '{
-     "inServiceStrategy":{"launchConfig": {"imageUuid":"docker:'$USERNAME'/subscription_backend_service_flowz:'$TAG'","kind": "container","labels":{"io.rancher.container.pull_image": "always","io.rancher.scheduler.affinity:host_label": "machine=cluster-flowz"},"ports": ["3039:3039/tcp","4039:4039/tcp"],"environment": {"RDBHost": "'"$RDBHost"'","RDBPort": "'"$RDBPort"'","rdb":"'"$rdb"'","x_api_token":"'"$x_api_token"'","update_user_url":"'"$update_user_url"'","pay_url":"'"$pay_url"'","user_detail_url":"'"$user_detail_url"'"},"healthCheck": {"type": "instanceHealthCheck","healthyThreshold": 2,"initializingTimeout": 60000,"interval": 2000,"name": null,"port": 3039,"recreateOnQuorumStrategyConfig": {"type": "recreateOnQuorumStrategyConfig","quorum": 1},"reinitializingTimeout": 60000,"responseTimeout": 60000,"strategy": "recreateOnQuorum","unhealthyThreshold": 3},"networkMode": "managed"}},"toServiceStrategy":null}' \
+     "inServiceStrategy":{"launchConfig": {"imageUuid":"docker:'$USERNAME'/subscription_backend_service_flowz:'$TAG'","kind": "container","labels":{"io.rancher.container.pull_image": "always","io.rancher.scheduler.affinity:host_label": "machine=cluster-flowz"},"ports": ["3039:3039/tcp","4039:4039/tcp"],"environment": {"RDBHost": "'"$RDBHost"'","RDBPort": "'"$RDBPort"'","rdb":"'"$rdb"'","x_api_token":"'"$x_api_token"'","update_user_url":"'"$update_user_url"'","pay_url":"'"$pay_url"'","user_detail_url":"'"$user_detail_url"'","domainKey":"'"$DOMAINKEY"'"},"healthCheck": {"type": "instanceHealthCheck","healthyThreshold": 2,"initializingTimeout": 60000,"interval": 2000,"name": null,"port": 3039,"recreateOnQuorumStrategyConfig": {"type": "recreateOnQuorumStrategyConfig","quorum": 1},"reinitializingTimeout": 60000,"responseTimeout": 60000,"strategy": "recreateOnQuorum","unhealthyThreshold": 3},"networkMode": "managed"}},"toServiceStrategy":null}' \
 http://rancher.flowz.com:8080/v2-beta/projects/$ENV_ID/services/$SERVICE_ID?action=upgrade
