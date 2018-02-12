@@ -16,6 +16,7 @@ const timeouts = {
 if (process.env['NODE_ENV'] !== 'production') {
   protocol = 'http'
 }
+protocol = 'http'
 
 let defaultConfig = {
   'subscriptionURL': '/subscriptionlist',
