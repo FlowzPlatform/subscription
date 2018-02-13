@@ -4,28 +4,26 @@ let _ = require('lodash')
 let async = require('asyncawait/async');
 let await = require('asyncawait/await');
 let rp = require('request-promise')
-let config = require('config')
-let config1
+let config1 = require('../config')
+// let config1
 // if (process.env.NODE_ENV !== 'production') {
 //   config1 = require('../../../config/default.json');
 // } else {
-config1 = require('../../../config/production.json');
+// config1 = require('../../../config/production.json');
 // }
 var moment = require('moment');
 moment().format();
-let baseURL = 'http://' + config1.host + ':' + config1.port
+
 let app
 
-if (process.env.x_api_token)
-    config1.x_api_token = process.env.x_api_token
-if (process.env.pay_url)
-    config1.pay_url = process.env.pay_url
-if (process.env.update_user_url)
-    config1.update_user_url = process.env.update_user_url
-if (process.env.user_detail_url)
-    config1.user_detail_url = process.env.user_detail_url
-if (process.env.api_url)
-  config1.api_url = process.env.api_url
+// if (process.env.x_api_token)
+//     config1.x_api_token = process.env.x_api_token
+// if (process.env.pay_url)
+//     config1.pay_url = process.env.pay_url
+// if (process.env.update_user_url)
+//     config1.update_user_url = process.env.update_user_url
+// if (process.env.user_detail_url)
+//     config1.user_detail_url = process.env.user_detail_url
 
 class Service {
   constructor (options) {
