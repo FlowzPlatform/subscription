@@ -15,7 +15,11 @@ var rethinkdb = {
       authKey: rauth,
       ssl: ssl
     }]
-  }
+  },
+  x_api_token: process.env.x_api_token,
+  pay_url: "http://api." + process.env.domainKey + "/payment/payment",
+  update_user_url: "http://api." + process.env.domainKey + "/user/updateuserdetails/",
+  user_detail_url: "http://auth." + process.env.domainKey + "/api/userdetails",
 };
 
 module.exports = rethinkdb;
