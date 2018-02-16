@@ -88,10 +88,7 @@ class Service {
               }
             }
            
-
             // previous_packages[subscriptionId].role = _.omit(previous_packages[subscriptionId].role, Role1);
-            
-            
             
           }
 
@@ -103,11 +100,10 @@ class Service {
                     }
                 })
                 .then(async (result) => {
-                  console.log("result....  ", result)
                   if (result.data.code == 201) {
                     let subscription_invite = await self.subscription_invitation(data , res )
                   }
-                  //self.sendEmail(data , res);
+                  self.sendEmail(data , res);
                   resolve(result.data)
                 }).catch(function (err){
                   let errorObj = {};
@@ -117,7 +113,6 @@ class Service {
                     errorObj.data = "'Auth token is required in header'";
                     resolve (errorObj)
                   }else{
-                    console.log(err)
                     errorObj.statusText = err.response.statusText;
                     errorObj.status = err.response.status;
                     errorObj.data = err.response.data;
@@ -127,7 +122,6 @@ class Service {
                   
                 })
       }).catch(function(err){
-        console.log("err........... ", err)
         let errorObj = {};
         errorObj.statusText = "Not Found";
         errorObj.status = 404;
@@ -141,28 +135,38 @@ class Service {
 
 async subscription_invitation(data , res) {
   this.app.service("subscription-invitation").create(data).then(function (response){
-    console.log("response",response)
   }).catch(function(err){
-      console.log("subscription invitaion error.....", err)
+    return err
   })
 }
 
   
 
-//  sendEmail(data , res){
-//    axios({
-//         method: 'post',
-//         url: baseUrl+'/vmailmicro/sendEmail',
-//         headers: {'Authorization': apiHeaders.authorization},
-//       data: { "to": data.toEmail,"from":data.fromEmail,"subject":"Invitation from Flowz","body":"You have been invited by "+ data.fromEmail +"to Flowz"}
-//     }).then(async (result) => {
-//       console.log("result", result)
-//       return true;
-//     }).catch(function(err){
-//       console.log("err.response")
-//       console.log(err.response)
-//     })
-//   }
+ sendEmail(data , res){
+   axios({
+        method: 'post',
+        url: baseUrl+'/vmailmicro/sendEmail',
+        headers: {'Authorization': apiHeaders.authorization},
+      data: { "to": data.toEmail,"from":data.fromEmail,"subject":"Invitation from Flowz","body":"You have been invited by "+ data.fromEmail +"to Flowz"}
+    }).then(async (result) => {
+      return true;
+    }).catch(function(err){
+      return err
+    })
+  }
+
+  sendDeclineEmail(data, res) {
+    axios({
+      method: 'post',
+      url: baseUrl + '/vmailmicro/sendEmail',
+      headers: { 'Authorization': apiHeaders.authorization },
+      data: { "to": data.toEmail, "from": data.fromEmail, "subject": "Your role is now no longer with Flowz.", "body": "You have been rejected by " + data.fromEmail + "to Flowz" }
+    }).then(async (result) => {
+        return true;
+    }).catch(function (err) {
+        return err
+    })
+  }
 
   validateSchema(data, schemaName) {
     
@@ -183,26 +187,19 @@ async subscription_invitation(data , res) {
   }
 
   async subscription_invitation_remove(data, res) {
-    console.log(">>>>>>>>>>>>>>>>>>>>>> ", data)
-    console.log(">>>>>>>>>>>>>>>>>>>>>> res", res)
     this.app.service("subscription-invitation").patch(data.query.subscription_invitation_id, { isDeleted: true }, data.query).then(function (response) {
-        console.log("response", response)
       }).catch(function (err) {
-        console.log("subscription invitaion error.....", err)
+        return err
       })
     }
     
   remove (id, params) {
      let previous_packages;
      let userId;
-    // let module = data.module;
      let subscriptionId = params.query.subscriptionId;
      let Role1 = params.query.role;
-    // //this.validateSchema(data, schemaName)
      let self = this;
     return new Promise(function (resolve, reject) {
-     // resolve(params)
-      console.log("params " , params)
       axios.post(baseUrl + '/auth/api/userdetailsbyemail', {
         "email": params.query.toEmail
       })
@@ -210,7 +207,6 @@ async subscription_invitation(data , res) {
           userId = res.data.data[0]._id;
           previous_packages = res.data.data[0].package
           if (previous_packages == undefined || previous_packages.length == 0) {
-            console.log("This user dose not assigned in this subscription for this role")
           } else {
              previous_packages[subscriptionId].role = _.omit(previous_packages[subscriptionId].role, Role1);
             
@@ -228,9 +224,8 @@ async subscription_invitation(data , res) {
               }
             })
             .then(async (result) => {
-              console.log("result....  ", result)
               let subscription_invite = await self.subscription_invitation_remove(params, res)
-              //self.sendEmail(data , res);
+              self.sendDeclineEmail(data , res);
               resolve(result.data)
             }).catch(function (err) {
               let errorObj = {};
@@ -240,7 +235,6 @@ async subscription_invitation(data , res) {
                 errorObj.data = "'Auth token is required in header'";
                 resolve(errorObj)
               } else {
-                console.log(err)
                 errorObj.statusText = err.response.statusText;
                 errorObj.status = err.response.status;
                 errorObj.data = err.response.data;
@@ -250,7 +244,6 @@ async subscription_invitation(data , res) {
 
             })
         }).catch(function (err) {
-          console.log("err........... ", err)
           let errorObj = {};
           errorObj.statusText = "Not Found";
           errorObj.status = 404;
