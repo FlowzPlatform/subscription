@@ -103,7 +103,7 @@ class Service {
                   if (result.data.code == 201) {
                     let subscription_invite = await self.subscription_invitation(data , res )
                   }
-                  //self.sendEmail(data , res);
+                  self.sendEmail(data , res);
                   resolve(result.data)
                 }).catch(function (err){
                   let errorObj = {};
@@ -142,31 +142,31 @@ async subscription_invitation(data , res) {
 
   
 
-//  sendEmail(data , res){
-//    axios({
-//         method: 'post',
-//         url: baseUrl+'/vmailmicro/sendEmail',
-//         headers: {'Authorization': apiHeaders.authorization},
-//       data: { "to": data.toEmail,"from":data.fromEmail,"subject":"Invitation from Flowz","body":"You have been invited by "+ data.fromEmail +"to Flowz"}
-//     }).then(async (result) => {
-//       return true;
-//     }).catch(function(err){
-//       return err
-//     })
-//   }
+ sendEmail(data , res){
+   axios({
+        method: 'post',
+        url: baseUrl+'/vmailmicro/sendEmail',
+        headers: {'Authorization': apiHeaders.authorization},
+      data: { "to": data.toEmail,"from":data.fromEmail,"subject":"Invitation from Flowz","body":"You have been invited by "+ data.fromEmail +"to Flowz"}
+    }).then(async (result) => {
+      return true;
+    }).catch(function(err){
+      return err
+    })
+  }
 
-//   sendDeclineEmail(data, res) {
-//     axios({
-//       method: 'post',
-//       url: baseUrl + '/vmailmicro/sendEmail',
-//       headers: { 'Authorization': apiHeaders.authorization },
-//       data: { "to": data.toEmail, "from": data.fromEmail, "subject": "Your role is now no longer with Flowz.", "body": "You have been rejected by " + data.fromEmail + "to Flowz" }
-//     }).then(async (result) => {
-//         return true;
-//     }).catch(function (err) {
-//         return err
-//     })
-//   }
+  sendDeclineEmail(data, res) {
+    axios({
+      method: 'post',
+      url: baseUrl + '/vmailmicro/sendEmail',
+      headers: { 'Authorization': apiHeaders.authorization },
+      data: { "to": data.toEmail, "from": data.fromEmail, "subject": "Your role is now no longer with Flowz.", "body": "You have been rejected by " + data.fromEmail + "to Flowz" }
+    }).then(async (result) => {
+        return true;
+    }).catch(function (err) {
+        return err
+    })
+  }
 
   validateSchema(data, schemaName) {
     
@@ -220,7 +220,7 @@ async subscription_invitation(data , res) {
             })
             .then(async (result) => {
               let subscription_invite = await self.subscription_invitation_remove(params, res)
-              //self.sendDeclineEmail(data , res);
+              self.sendDeclineEmail(data , res);
               resolve(result.data)
             }).catch(function (err) {
               let errorObj = {};
