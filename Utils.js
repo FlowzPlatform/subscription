@@ -21,7 +21,7 @@ let CachedRP = (options, {key, timeout}) => {
       Cache[key] = {'result': result, 'timestamp': Date.now()}
       resolve(result)
     })
-    .catch((err) => resolve(null))
+    .catch((err) => { console.log(err); resolve(null) })
   })
 }
 
