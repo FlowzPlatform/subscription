@@ -4,28 +4,26 @@ let _ = require('lodash')
 let async = require('asyncawait/async');
 let await = require('asyncawait/await');
 let rp = require('request-promise')
-let config = require('config')
-let config1
+let config1 = require('../config')
+// let config1
 // if (process.env.NODE_ENV !== 'production') {
 //   config1 = require('../../../config/default.json');
 // } else {
-config1 = require('../../../config/production.json');
+// config1 = require('../../../config/production.json');
 // }
 var moment = require('moment');
 moment().format();
-let baseURL = 'http://' + config1.host + ':' + config1.port
+
 let app
 
-if (process.env.x_api_token)
-    config1.x_api_token = process.env.x_api_token
-if (process.env.pay_url)
-    config1.pay_url = process.env.pay_url
-if (process.env.update_user_url)
-    config1.update_user_url = process.env.update_user_url
-if (process.env.user_detail_url)
-    config1.user_detail_url = process.env.user_detail_url
-if (process.env.api_url)
-  config1.api_url = process.env.api_url
+// if (process.env.x_api_token)
+//     config1.x_api_token = process.env.x_api_token
+// if (process.env.pay_url)
+//     config1.pay_url = process.env.pay_url
+// if (process.env.update_user_url)
+//     config1.update_user_url = process.env.update_user_url
+// if (process.env.user_detail_url)
+//     config1.user_detail_url = process.env.user_detail_url
 
 class Service {
   constructor (options) {
@@ -127,32 +125,23 @@ var createFunction = async (function(data,params, app) {
         // axios.post(config1.api_url + 'user-subscription', packageObj)
         app.service('user-subscription').create(packageObj)
         .then(async res => {
-          let planName = res.data.id.substr(res.data.id.length - 5) + "-" +  packageObj.name + "-" + moment(packageObj.expiredOn).format('MM-DD-YYYY')
+          let planName = res.id.substr(res.id.length - 5) + "-" +  packageObj.name + "-" + moment(packageObj.expiredOn).format('MM-DD-YYYY')
           if (userDetail.data.package) {
-            // if (Array.isArray(userDetail.data.package)) {
-            //   let arrToObj = {}
-            //   for (var i = 0; i < userDetail.data.package.length; ++i)
-            //     arrToObj[i] = userDetail.data.package[i]
-            //   userDetail.data.package = arrToObj
-            //   userDetail.data.package[res.data.id] = {"subscriptionId": res.data.id, "role": "admin"}
-            // } else {
-              userDetail.data.package[res.data.id] = {"subscriptionId": res.data.id, "role": "admin", "name": planName}
-            // }
+            userDetail.data.package[res.id] = {"subscriptionId": res.id, "role": "admin", "name": planName}
           } else {
             userDetail.data.package={}
-            userDetail.data.package[res.data.id] = {"subscriptionId": res.data.id, "role": "admin", "name": planName}
+            userDetail.data.package[res.id] = {"subscriptionId": res.id, "role": "admin", "name": planName}
           }
-          axios.put(config1.update_user_url + u_id, {"package":userDetail.data.package, "defaultSubscriptionId": res.data.id}, config)
+          axios.put(config1.update_user_url + u_id, {"package":userDetail.data.package, "defaultSubscriptionId": res.id}, config)
           .then(res => {
             console.log('User ',  u_id, ' has subscribed  package successfully..!')
           })
           .catch(err => {
             console.log("Error : ", err)
           })
-          // axios.post(config1.api_url + 'reverse-subscription',{"subscriptionId": res.data.id})
-          app.service('reverse-subscription').create({"subscriptionId": res.data.id})
+          app.service('reverse-subscription').create({"subscriptionId": res.id})
           .then(res => {
-            console.log('subscriptionId : ', res.data.subscriptionId)
+            console.log('subscriptionId : ', res.subscriptionId)
           })
           .catch(err => {
             console.log("Error : ", err)
@@ -168,32 +157,23 @@ var createFunction = async (function(data,params, app) {
         // axios.post(config1.api_url + 'user-subscription', packageObj)
         app.service('user-subscription').create(packageObj)
         .then(res => {
-          let planName = res.data.id.substr(res.data.id.length - 5) + "-" +  packageObj.name + "-" + moment(packageObj.expiredOn).format('MM-DD-YYYY')
+          let planName = res.id.substr(res.id.length - 5) + "-" +  packageObj.name + "-" + moment(packageObj.expiredOn).format('MM-DD-YYYY')
           if (userDetail.data.package) {
-            // if (Array.isArray(userDetail.data.package)) {
-            //   let arrToObj = {}
-            //   for (var i = 0; i < userDetail.data.package.length; ++i)
-            //     arrToObj[i] = userDetail.data.package[i]
-            //   userDetail.data.package = arrToObj
-            //   userDetail.data.package[res.data.id] = {"subscriptionId": res.data.id, "role": "admin"}
-            // } else {
-              userDetail.data.package[res.data.id] = {"subscriptionId": res.data.id, "role": "admin", "name": planName}
-            // }
+              userDetail.data.package[res.id] = {"subscriptionId": res.id, "role": "admin", "name": planName}
           } else {
             userDetail.data.package={}
-            userDetail.data.package[res.data.id] = {"subscriptionId": res.data.id, "role": "admin", "name": planName}
+            userDetail.data.package[res.id] = {"subscriptionId": res.id, "role": "admin", "name": planName}
           }
-          axios.put(config1.update_user_url + u_id, {"package":userDetail.data.package, "defaultSubscriptionId": res.data.id}, config)
+          axios.put(config1.update_user_url + u_id, {"package":userDetail.data.package, "defaultSubscriptionId": res.id}, config)
           .then(res => {
             console.log('User ',  u_id, ' has subscribed  package successfully..!')
           })
           .catch(err => {
             console.log("Error : ", err)
           })
-          // axios.post(config1.api_url + 'reverse-subscription',{"subscriptionId": res.data.id})
-          app.service('reverse-subscription').create({"subscriptionId": res.data.id})
+          app.service('reverse-subscription').create({"subscriptionId": res.id})
           .then(res => {
-            console.log('subscriptionId : ', res.data.subscriptionId)
+            console.log('subscriptionId : ', res.subscriptionId)
           })
           .catch(err => {
             console.log("Error : ", err)
