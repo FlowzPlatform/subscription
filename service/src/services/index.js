@@ -8,6 +8,7 @@ const registerPermissionScope = require('./register-permission-scope/register-pe
 const userSubscription = require('./user-subscription/user-subscription.service.js');
 const reverseSubscription = require('./reverse-subscription/reverse-subscription.service.js');
 const invite = require('./invite/invite.service.js');
+const roles = require('./roles/roles.service.js');
 
 const subscriptionInvitation = require('./subscription-invitation/subscription-invitation.service.js');
 
@@ -24,4 +25,5 @@ module.exports = function () {
   app.configure(reverseSubscription);
   app.configure(invite);
   app.configure(subscriptionInvitation);
+  app.configure(roles);
 };
