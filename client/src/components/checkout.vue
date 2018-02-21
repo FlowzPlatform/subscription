@@ -118,14 +118,13 @@ export default {
         login_token: this.login_token,
         payDetail: this.payDetail
       }
-
 			axios({
 							method:'post',
 							url: baseUrl + "/checkout",
 							headers: {'authorization': auth_token},
 							data:sObj
 						}).then(res => {
-							console.log("response.....",res)
+							// console.log("response.....",res)
 							this.payDone = true
 			        if (res.data.hasOwnProperty('error')) {
 			          this.payInfo.class = 'alert alert-danger'
