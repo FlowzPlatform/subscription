@@ -57,6 +57,7 @@ class Service {
     let module = data.module;
     let subscriptionId = data.subscriptionId;
     let Role1 = data.role;
+    let name = data.name;
     this.validateSchema(data, schemaName)
     let self = this;
     return new Promise(function(resolve , reject ){
@@ -70,7 +71,8 @@ class Service {
             previous_packages = {
                [subscriptionId] : {
                     "subscriptionId": subscriptionId,
-                    "role": Role1
+                    "role": Role1,
+                    "name" : name
               
             }
           }
@@ -84,7 +86,8 @@ class Service {
               
               previous_packages[subscriptionId] = {
                 "subscriptionId": subscriptionId,
-                "role": Role1
+                "role": Role1,
+                "name": name
               }
             }
            
@@ -103,7 +106,7 @@ class Service {
                   if (result.data.code == 201) {
                     let subscription_invite = await self.subscription_invitation(data , res )
                   }
-                  self.sendEmail(data , res);
+                  //self.sendEmail(data , res);
                   resolve(result.data)
                 }).catch(function (err){
                   let errorObj = {};
@@ -142,31 +145,31 @@ async subscription_invitation(data , res) {
 
   
 
- sendEmail(data , res){
-   axios({
-        method: 'post',
-        url: baseUrl+'/vmailmicro/sendEmail',
-        headers: {'Authorization': apiHeaders.authorization},
-      data: { "to": data.toEmail,"from":data.fromEmail,"subject":"Invitation from Flowz","body":"You have been invited by "+ data.fromEmail +"to Flowz"}
-    }).then(async (result) => {
-      return true;
-    }).catch(function(err){
-      return err
-    })
-  }
+//  sendEmail(data , res){
+//    axios({
+//         method: 'post',
+//         url: baseUrl+'/vmailmicro/sendEmail',
+//         headers: {'Authorization': apiHeaders.authorization},
+//       data: { "to": data.toEmail,"from":data.fromEmail,"subject":"Invitation from Flowz","body":"You have been invited by "+ data.fromEmail +"to Flowz"}
+//     }).then(async (result) => {
+//       return true;
+//     }).catch(function(err){
+//       return err
+//     })
+//   }
 
-  sendDeclineEmail(data, res) {
-    axios({
-      method: 'post',
-      url: baseUrl + '/vmailmicro/sendEmail',
-      headers: { 'Authorization': apiHeaders.authorization },
-      data: { "to": data.toEmail, "from": data.fromEmail, "subject": "Your role is now no longer with Flowz.", "body": "You have been rejected by " + data.fromEmail + "to Flowz" }
-    }).then(async (result) => {
-        return true;
-    }).catch(function (err) {
-        return err
-    })
-  }
+//   sendDeclineEmail(data, res) {
+//     axios({
+//       method: 'post',
+//       url: baseUrl + '/vmailmicro/sendEmail',
+//       headers: { 'Authorization': apiHeaders.authorization },
+//       data: { "to": data.toEmail, "from": data.fromEmail, "subject": "Your role is now no longer with Flowz.", "body": "You have been rejected by " + data.fromEmail + "to Flowz" }
+//     }).then(async (result) => {
+//         return true;
+//     }).catch(function (err) {
+//         return err
+//     })
+//   }
 
   validateSchema(data, schemaName) {
     
@@ -220,7 +223,8 @@ async subscription_invitation(data , res) {
             })
             .then(async (result) => {
               let subscription_invite = await self.subscription_invitation_remove(params, res)
-              self.sendDeclineEmail(data , res);
+              
+              //self.sendDeclineEmail(params , res);
               resolve(result.data)
             }).catch(function (err) {
               let errorObj = {};
@@ -250,7 +254,9 @@ async subscription_invitation(data , res) {
   }
 
   async subscription_invitation_remove(data, res) {
-    this.app.service("subscription-invitation").patch(data.query.subscription_invitation_id, { isDeleted: true }, data.query).then(function (response) {
+    this.app.service("subscription-invitation").patch(data.query.subscription_invitation_id, 
+      { isDeleted: true }, data.query).then(function (response) {
+      //return response
     }).catch(function (err) {
       return err
     })
