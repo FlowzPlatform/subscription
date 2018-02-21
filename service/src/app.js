@@ -16,6 +16,7 @@ const services = require('./services');
 const appHooks = require('./app.hooks');
 
 const rethinkdb = require('./rethinkdb');
+const subscription = require('flowz-subscription')
 
 // const mongodb = require('./mongodb');
 
@@ -45,6 +46,7 @@ app.configure(rethinkdb);
 app.configure(rest());
 app.configure(socketio());
 
+app.use(subscription.featherSubscription)
 // Set up our services (see `services/index.js`)
 app.configure(services);
 // Configure middleware (see `middleware/index.js`) - always has to be last
