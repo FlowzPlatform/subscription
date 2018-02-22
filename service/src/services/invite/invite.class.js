@@ -166,7 +166,7 @@ async subscription_invitation(data , res) {
 
 
   sendDeclineEmail(params, res) {
-    var SendEmailBody = SendEmailBodyInvite.replace(/WriteSenderNameHere/i, params.query.toEmail);
+    var SendEmailBody = SendEmailBodyDecline.replace(/WriteSenderNameHere/i, params.query.toEmail);
     SendEmailBody = SendEmailBody.replace(/domainKey/g, domainKey);
     SendEmailBody = SendEmailBody.replace(/SYSTEMNAME/g, Object.keys(params.query.role)[0]);
     SendEmailBody = SendEmailBody.replace(/ROLE/g, Object.values(params.query.role)[0]);
