@@ -5,9 +5,12 @@ const ajv = new Ajv();
 const feathersErrors = require('feathers-errors');
 const errors = feathersErrors.errors;
 const _ = require('lodash')
+let emailTemp = require('../emailTemplate')
+let SendEmailBodyInvite = emailTemp.sendInviteemail;
+let SendEmailBodyDecline = emailTemp.sendDeclineemail;
 
 let domainKey = process.env.domainKey;
-let baseUrl = "http://api."+domainKey;
+let baseUrl = "http://api."+ domainKey;
 
 let schemaName = {
   "properties": {
@@ -143,14 +146,17 @@ async subscription_invitation(data , res) {
   })
 }
 
-  
-
- sendEmail(data , res){
+   sendEmail(data , res){
+   var SendEmailBody = SendEmailBodyInvite.replace(/WriteSenderNameHere/i, data.toEmail);
+   SendEmailBody = SendEmailBody.replace(/domainKey/g, domainKey);
+   SendEmailBody = SendEmailBody.replace(/SYSTEMNAME/g, Object.keys(data.role)[0]);
+   SendEmailBody = SendEmailBody.replace(/ROLE/g, Object.values(data.role)[0]);
+   
    axios({
         method: 'post',
         url: baseUrl+'/vmailmicro/sendEmail',
         headers: {'Authorization': apiHeaders.authorization},
-      data: { "to": data.toEmail,"from":data.fromEmail,"subject":"Invitation from Flowz","body":"You have been invited by "+ data.fromEmail +"to Flowz"}
+     data: { "to": data.toEmail, "from": data.fromEmail, "subject": "Invitation from Flowz", "body": SendEmailBody}
     }).then(async (result) => {
       return true;
     }).catch(function(err){
@@ -158,18 +164,23 @@ async subscription_invitation(data , res) {
     })
   }
 
-//   sendDeclineEmail(data, res) {
-//     axios({
-//       method: 'post',
-//       url: baseUrl + '/vmailmicro/sendEmail',
-//       headers: { 'Authorization': apiHeaders.authorization },
-//       data: { "to": data.toEmail, "from": data.fromEmail, "subject": "Your role is now no longer with Flowz.", "body": "You have been rejected by " + data.fromEmail + "to Flowz" }
-//     }).then(async (result) => {
-//         return true;
-//     }).catch(function (err) {
-//         return err
-//     })
-//   }
+
+  sendDeclineEmail(params, res) {
+    var SendEmailBody = SendEmailBodyInvite.replace(/WriteSenderNameHere/i, params.query.toEmail);
+    SendEmailBody = SendEmailBody.replace(/domainKey/g, domainKey);
+    SendEmailBody = SendEmailBody.replace(/SYSTEMNAME/g, Object.keys(params.query.role)[0]);
+    SendEmailBody = SendEmailBody.replace(/ROLE/g, Object.values(params.query.role)[0]);
+    axios({
+      method: 'post',
+      url: baseUrl + '/vmailmicro/sendEmail',
+      headers: { 'Authorization': apiHeaders.authorization },
+      data: { "to": params.query.toEmail, "from": params.query.fromEmail, "subject": "Your role is now no longer with Flowz.", "body": SendEmailBody }
+    }).then(async (result) => {
+        return true;
+    }).catch(function (err) {
+        return err
+    })
+  }
 
   validateSchema(data, schemaName) {
     
@@ -224,7 +235,7 @@ async subscription_invitation(data , res) {
             .then(async (result) => {
               let subscription_invite = await self.subscription_invitation_remove(params, res)
               
-              //self.sendDeclineEmail(params , res);
+              self.sendDeclineEmail(params , res);
               resolve(result.data)
             }).catch(function (err) {
               let errorObj = {};

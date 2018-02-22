@@ -88,7 +88,6 @@ async function validateUser(data) {
         resolve(response)
       })
       .catch(function (error) {
-        console.log("%%%%%%%%%%%%", error)
         resolve({ "code": 401 })
       });
   })
