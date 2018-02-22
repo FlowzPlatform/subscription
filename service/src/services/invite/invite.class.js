@@ -146,7 +146,7 @@ async subscription_invitation(data , res) {
   })
 }
 
- sendEmail(data , res){
+   sendEmail(data , res){
    var SendEmailBody = SendEmailBodyInvite.replace(/WriteSenderNameHere/i, data.toEmail);
    SendEmailBody = SendEmailBody.replace(/domainKey/g, domainKey);
    SendEmailBody = SendEmailBody.replace(/SYSTEMNAME/g, Object.keys(data.role)[0]);
@@ -163,6 +163,7 @@ async subscription_invitation(data , res) {
       return err
     })
   }
+
 
   sendDeclineEmail(params, res) {
     var SendEmailBody = SendEmailBodyInvite.replace(/WriteSenderNameHere/i, params.query.toEmail);
