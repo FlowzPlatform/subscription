@@ -147,8 +147,8 @@ async subscription_invitation(data , res) {
 }
 
    sendEmail(data , res){
-   var SendEmailBody = SendEmailBodyInvite.replace(/WriteSenderNameHere/i, data.toEmail);
-   SendEmailBody = SendEmailBody.replace(/domainKey/g, domainKey);
+   var SendEmailBody = SendEmailBodyInvite.replace(/WriteSenderNameHere/i, data.fromEmail);
+   SendEmailBody = SendEmailBody.replace(/domainKey/g, process.env.domainKey);
    SendEmailBody = SendEmailBody.replace(/SYSTEMNAME/g, Object.keys(data.role)[0]);
    SendEmailBody = SendEmailBody.replace(/ROLE/g, Object.values(data.role)[0]);
    
@@ -166,8 +166,8 @@ async subscription_invitation(data , res) {
 
 
   sendDeclineEmail(params, res) {
-    var SendEmailBody = SendEmailBodyDecline.replace(/WriteSenderNameHere/i, params.query.toEmail);
-    SendEmailBody = SendEmailBody.replace(/domainKey/g, domainKey);
+    var SendEmailBody = SendEmailBodyDecline.replace(/WriteSenderNameHere/i, params.query.fromEmail);
+    SendEmailBody = SendEmailBody.replace(/domainKey/g, process.env.domainKey);
     SendEmailBody = SendEmailBody.replace(/SYSTEMNAME/g, Object.keys(params.query.role)[0]);
     SendEmailBody = SendEmailBody.replace(/ROLE/g, Object.values(params.query.role)[0]);
     axios({
