@@ -112,8 +112,8 @@ class Service {
                 .then(async (result) => {
                   if (result.data.code == 201) {
                     let subscription_invite = await self.subscription_invitation(data , res )
-                  }
-                  self.sendEmail(data , res);
+                    self.sendEmail(data, res);
+                  }                
                   resolve(result.data)
                 }).catch(function (err){
                   let errorObj = {};
@@ -144,10 +144,37 @@ class Service {
   }
 
 async subscription_invitation(data , res) {
-  this.app.service("subscription-invitation").create(data).then(function (response){
-  }).catch(function(err){
+  let self = this;
+  this.app.service("subscription-invitation").find({query : { "toEmail": data.toEmail, "subscriptionId": data.subscriptionId, "isDeleted": false }})
+  .then(function (response) {
+    if (response.data.length == 0) {
+      self.app.service("subscription-invitation").create(data).then(function (response){
+      }).catch(function(err){
+        return err
+      })
+    }else{
+      console.log(response.data)
+      response.data[0].isDeleted = true
+      self.app.service("subscription-invitation").patch(response.data[0].id, response.data[0] , '').then(function (response2) {
+        console.log("response2-----" ,response2)
+        self.app.service("subscription-invitation").create(data).then(function (response) {
+        }).catch(function (err) {
+          return err
+        })
+      }).catch(function (err) {
+        return err
+      })
+      
+    }
+  }).catch(function (err) {
     return err
   })
+
+
+  // this.app.service("subscription-invitation").create(data).then(function (response){
+  // }).catch(function(err){
+  //   return err
+  // })
 }
 
  sendEmail(data , res){
