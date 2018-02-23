@@ -75,7 +75,9 @@ class Service {
                [subscriptionId] : {
                     "subscriptionId": subscriptionId,
                     "role": Role1,
-                    "name" : name
+                    "name" : name,
+                    "createdAt": new Date(),
+                    "invitedBy": data.fromEmail
               
             }
           }
@@ -90,7 +92,9 @@ class Service {
               previous_packages[subscriptionId] = {
                 "subscriptionId": subscriptionId,
                 "role": Role1,
-                "name": name
+                "name": name,
+                "createdAt": new Date(),
+                "invitedBy": data.fromEmail
               }
             }
            
@@ -146,9 +150,9 @@ async subscription_invitation(data , res) {
   })
 }
 
-   sendEmail(data , res){
-   var SendEmailBody = SendEmailBodyInvite.replace(/WriteSenderNameHere/i, data.fromEmail);
-   SendEmailBody = SendEmailBody.replace(/domainKey/g, process.env.domainKey);
+ sendEmail(data , res){
+   var SendEmailBody = SendEmailBodyInvite.replace(/WriteSenderNameHere/i, data.toEmail);
+   SendEmailBody = SendEmailBody.replace(/DOMAIN/g, 'https://www.dashboard.' + domainKey);
    SendEmailBody = SendEmailBody.replace(/SYSTEMNAME/g, Object.keys(data.role)[0]);
    SendEmailBody = SendEmailBody.replace(/ROLE/g, Object.values(data.role)[0]);
    
