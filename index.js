@@ -7,7 +7,7 @@ if (process.env['domainKey'] !== undefined && process.env['domainKey'] !== '') {
 
 const timeouts = {
   'checkResourcePermission': 0,
-  'getUserPackage': 7200,
+  'getUserPackage': 60,
   'getRegisterRole': 86400,
   'getRegisterResource': 86400,
   'getUserSubscription': 86400,
