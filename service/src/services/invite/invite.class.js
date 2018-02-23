@@ -168,11 +168,12 @@ async subscription_invitation(data , res) {
     })
   }
 
+
   sendDeclineEmail(params, res) {
-    var SendEmailBody2 = SendEmailBodyDecline.replace(/WriteSenderNameHere/i, params.query.toEmail);
-    SendEmailBody2 = SendEmailBody2.replace(/DOMAIN/g, 'https://www.dashboard.' + domainKey);
-    SendEmailBody2 = SendEmailBody2.replace(/SYSTEMNAME/g, Object.keys(params.query.role)[0]);
-    SendEmailBody2 = SendEmailBody2.replace(/ROLE/g, Object.values(params.query.role)[0]);
+    var SendEmailBody = SendEmailBodyDecline.replace(/WriteSenderNameHere/i, params.query.fromEmail);
+    SendEmailBody = SendEmailBody.replace(/domainKey/g, process.env.domainKey);
+    SendEmailBody = SendEmailBody.replace(/SYSTEMNAME/g, Object.keys(params.query.role)[0]);
+    SendEmailBody = SendEmailBody.replace(/ROLE/g, Object.values(params.query.role)[0]);
     axios({
       method: 'post',
       url: baseUrl + '/vmailmicro/sendEmail',

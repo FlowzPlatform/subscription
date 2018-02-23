@@ -44,6 +44,7 @@
     "feathers-rethinkdb": "^0.4.3",
     "feathers-socketio": "^2.0.1",
     "fibers": "^2.0.0",
+    "flowz-subscription": "^0.2.1",
     "helmet": "^3.9.0",
     "lodash": "^4.17.4",
     "moment": "^2.20.1",

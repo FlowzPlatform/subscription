@@ -6,9 +6,6 @@ then
     echo $ENV_ID
     USERNAME="$DOCKER_USERNAME_FLOWZ";
     TAG="latest";
-    update_user_url="$update_user_url_master";
-    pay_url="$pay_url_master";
-    user_detail_url="$user_detail_url_master";
     DOMAINKEY="$DOMAINKEY_MASTER";
   }
 elif [ "$TRAVIS_BRANCH" = "develop" ]
@@ -19,9 +16,6 @@ then
       echo $ENV_ID
       USERNAME="$DOCKER_USERNAME";
       TAG="dev";
-      update_user_url="$update_user_url_develop";
-      pay_url="$pay_url_develop";
-      user_detail_url="$user_detail_url_develop";
       DOMAINKEY="$DOMAINKEY_DEVELOP";
   }
 else
@@ -31,9 +25,6 @@ else
       echo $ENV_ID
       USERNAME="$DOCKER_USERNAME";
       TAG="qa";
-      update_user_url="$update_user_url_qa";
-      pay_url="$pay_url_qa";
-      user_detail_url="$user_detail_url_qa";
       DOMAINKEY="$DOMAINKEY_QA";
   }
 fi
