@@ -273,7 +273,7 @@ let commonActionValidation = async (context) => {
     let moduleName = context.params.moduleName
     let userRole = subscription.getUserRole(context, subscriptionId)
     console.log('=============userRole=', userRole)
-    if (await subscription.isUserHasActionPermission(context, userRole, isSite) === false) {
+    if (userRole !== 'superadmin' && await subscription.isUserHasActionPermission(context, userRole, isSite) === false) {
       context.result = {status: 403, message: 'Access denied for action'}
       throw new errors.Forbidden('Permission not available for action', {errorCode: 'ERR-PERMISSION'})
       // return context
