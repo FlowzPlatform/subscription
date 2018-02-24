@@ -11,7 +11,8 @@ module.exports = function () {
   subscription.moduleResource.moduleName = 'subscription'
   let registerAppModule = {
     'roles': ['find', 'get'],
-    'invite': ['create', 'remove']
+    'invite': ['create', 'remove'],
+    'subscription-plans': ['create']
   }
 
   subscription.moduleResource.registerAppModule = registerAppModule
