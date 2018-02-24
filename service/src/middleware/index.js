@@ -15,7 +15,7 @@ module.exports = function () {
   }
 
   subscription.moduleResource.registerAppModule = registerAppModule
-  subscription.moduleResource.appRoles = ['Superadmin']
+  subscription.moduleResource.appRoles = ['Superadmin' , 'admin']
   subscription.registeredAppModulesRole()
   subscription.registerDynamicHooks(app, registerAppModule)
 
