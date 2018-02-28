@@ -11,11 +11,12 @@ module.exports = function () {
   subscription.moduleResource.moduleName = 'subscription'
   let registerAppModule = {
     'roles': ['find', 'get'],
-    'invite': ['create', 'remove']
+    'invite': ['create', 'remove'],
+    'subscription-plans': ['create', 'update', 'patch', 'remove']
   }
 
   subscription.moduleResource.registerAppModule = registerAppModule
-  subscription.moduleResource.appRoles = ['Superadmin' , 'admin']
+  subscription.moduleResource.appRoles = ['Superadmin', 'admin']
   subscription.registeredAppModulesRole()
   subscription.registerDynamicHooks(app, registerAppModule)
 

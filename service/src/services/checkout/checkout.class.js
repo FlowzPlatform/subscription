@@ -62,25 +62,25 @@ class Service {
   }
 }
 
-var payObj = async( function (data, price) {
+var payObj = async function (data, price) {
   var sObj =  {
         gateway:'stripe',
-        amount : parseInt(price),
+        amount : parseFloat(price),
         currency:'usd',
         cardNumber: data.payDetail.cardNumber,
         expMonth: data.payDetail.expiryMM,
         expYear: data.payDetail.expiryYY,
         cvc: data.payDetail.cvCode,
-        description:'this is desc',
+        description:'payment for subscription plan subscribe',
         isCustomer:false,
         metadata: {
           id: data.sub_id
         }
       }
     return sObj
-})
+}
 
-var getThisSubscription = async(function (id, app) {
+var getThisSubscription = async function (id, app) {
   // var res = await (axios.get(baseURL + '/subscription-plans/' + id))
   return app.service('subscription-plans').get(id)
   .then(res => {
@@ -89,12 +89,19 @@ var getThisSubscription = async(function (id, app) {
   .catch(err => {
     console.log('Error in checkout at getThisSubscription:', err)
   })
-})
+}
 
 var createFunction = async (function(data,params, app) {
   // console.log("+++++++++++ params",params.query.authorization)
   var thisSubscription = await (getThisSubscription(data.sub_id, app))
-  // console.log('thisSubscription', thisSubscription)
+  console.log('thisSubscription', thisSubscription)
+  if(thisSubscription === undefined || thisSubscription === null) {
+    return {error: 'please select valid subscription plan'}
+  }
+  if(thisSubscription.hasOwnProperty('status') && thisSubscription.status === false) {
+    return {error: 'please select valid subscription plan'}
+  }
+
   var paymentObj = await (payObj(data, thisSubscription.price))
   var config = {
     headers:  {
@@ -113,7 +120,7 @@ var createFunction = async (function(data,params, app) {
         return {error: err}
       }))
   if(checkout_res.hasOwnProperty('statusCode')) {
-    return {error: res.data.message}
+    return {error: checkout_res.message}
   } else {
     console.log('payment Successfully Done!')
     let userDetail = await (getUserPackage(config.headers.authorization))
@@ -194,13 +201,13 @@ var createFunction = async (function(data,params, app) {
 let makePackageObj = async (function (subData, trans_id, subscribed, userDetail) {
   var exdate
   if (subscribed != null) {
-    if(moment(subscribed.expiredOn).diff(moment().format(), 'days') <= 0) {
-      exdate = moment().add(subData.validity, 'days').format()
+    if(moment(subscribed.expiredOn).diff(moment().format(), 'months') <= 0) {
+      exdate = moment().add(subData.validity, 'months').format()
     } else {
-      exdate = moment(subscribed.expiredOn).add(subData.validity, 'days').format()
+      exdate = moment(subscribed.expiredOn).add(subData.validity, 'months').format()
     }
   } else {
-    exdate = moment().add(subData.validity, 'days').format()
+    exdate = moment().add(subData.validity, 'months').format()
   }
   // console.log("exdate :",exdate)
   var detail = {}
