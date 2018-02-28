@@ -94,7 +94,7 @@ var getThisSubscription = async function (id, app) {
 var createFunction = async (function(data,params, app) {
   // console.log("+++++++++++ params",params.query.authorization)
   var thisSubscription = await (getThisSubscription(data.sub_id, app))
-  console.log('thisSubscription', thisSubscription)
+  // console.log('thisSubscription', thisSubscription)
   if(thisSubscription === undefined || thisSubscription === null) {
     return {error: 'please select valid subscription plan'}
   }
@@ -119,8 +119,9 @@ var createFunction = async (function(data,params, app) {
         console.log('Error', err)
         return {error: err}
       }))
-  if(checkout_res.hasOwnProperty('statusCode')) {
-    return {error: checkout_res.message}
+
+  if(checkout_res.hasOwnProperty('error')) {
+    return {error: 'Payment service not available, Please try after sometime'}
   } else {
     console.log('payment Successfully Done!')
     let userDetail = await (getUserPackage(config.headers.authorization))
