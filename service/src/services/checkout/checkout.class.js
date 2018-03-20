@@ -134,7 +134,7 @@ var createFunction = async (function(data,params, app) {
         packageObj.createdAt = new Date()
         app.service('user-subscription').create(packageObj)
         .then(async res => {
-          let planName = res.id.substr(res.id.length - 5) + "-" +  packageObj.name + "-" + moment(packageObj.expiredOn).format('MM-DD-YYYY')
+          let planName = packageObj.name + "-" + moment(packageObj.expiredOn).format('DD-MMM-YYYY') + "-" + res.id.substr(res.id.length - 5)
           if (userDetail.data.package) {
             userDetail.data.package[res.id] = {"subscriptionId": res.id, "role": "admin", "name": planName}
           } else {
@@ -167,7 +167,7 @@ var createFunction = async (function(data,params, app) {
         packageObj.createdAt = new Date()
         app.service('user-subscription').create(packageObj)
         .then(res => {
-          let planName = res.id.substr(res.id.length - 5) + "-" +  packageObj.name + "-" + moment(packageObj.expiredOn).format('MM-DD-YYYY')
+          let planName = packageObj.name + "-" + moment(packageObj.expiredOn).format('DD-MMM-YYYY') + "-" + res.id.substr(res.id.length - 5)
           if (userDetail.data.package) {
               userDetail.data.package[res.id] = {"subscriptionId": res.id, "role": "admin", "name": planName}
           } else {
