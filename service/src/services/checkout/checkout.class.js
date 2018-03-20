@@ -164,6 +164,7 @@ var createFunction = async (function(data,params, app) {
         var packageObj = await (makePackageObj(thisSubscription, checkout_res.id, null, userDetail))
         var u_id = userDetail.data._id
         // axios.post(config1.api_url + 'user-subscription', packageObj)
+        packageObj.createdAt = new Date()
         app.service('user-subscription').create(packageObj)
         .then(res => {
           let planName = res.id.substr(res.id.length - 5) + "-" +  packageObj.name + "-" + moment(packageObj.expiredOn).format('MM-DD-YYYY')

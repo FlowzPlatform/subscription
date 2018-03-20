@@ -44,8 +44,8 @@ module.exports = {
 };
 
 var modify = async(function(hook){
-  // console.log("***********hook",hook.data)
-  // console.log("***********hook",hook.params)
+  console.log("***********hook",hook.data)
+  console.log("***********hook",hook.params)
   let obj = {}
   let action_obj = {}
   let id = ''
@@ -63,7 +63,10 @@ var modify = async(function(hook){
   }
   obj["actions"].push(action_obj)
 
-  var tdata = await(hook.app.service('/register-resource').find())
+  console.log('module======', module)
+  var tdata = await(hook.app.service('/register-resource').find({
+    'query':{'module': module}
+  }))
 
   console.log('tdata', tdata)
 
