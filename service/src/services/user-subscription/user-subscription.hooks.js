@@ -1,4 +1,5 @@
-const errors = require('feathers-errors')
+const feathersErrors = require('feathers-errors');
+const errors = feathersErrors.errors;
 
 module.exports = {
   before: {

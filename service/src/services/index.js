@@ -12,6 +12,8 @@ const roles = require('./roles/roles.service.js');
 
 const subscriptionInvitation = require('./subscription-invitation/subscription-invitation.service.js');
 
+const transactions = require('./transactions/transactions.service.js');
+
 module.exports = function () {
   const app = this; // eslint-disable-line no-unused-vars
   app.configure(defaultSubscription);
@@ -26,4 +28,5 @@ module.exports = function () {
   app.configure(invite);
   app.configure(subscriptionInvitation);
   app.configure(roles);
+  app.configure(transactions);
 };
