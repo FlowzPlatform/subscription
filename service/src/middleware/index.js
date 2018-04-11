@@ -1,7 +1,8 @@
 const handler = require('feathers-errors/handler');
 const notFound = require('feathers-errors/not-found');
-const subscription = require('flowz-subscription')
-module.exports.subscription = subscription
+const subscription = require('flowz-subscription');
+const flowzError = require('flowz-error-handler');
+module.exports.subscription = subscription;
 module.exports = function () {
   // Add your custom middleware here. Remember, that
   // in Express the order matters, `notFound` and
@@ -17,9 +18,10 @@ module.exports = function () {
 
   subscription.moduleResource.registerAppModule = registerAppModule
   subscription.moduleResource.appRoles = ['Superadmin', 'admin']
-  subscription.registeredAppModulesRole()
+  subscription.registeredAppModulesRole();
   subscription.registerDynamicHooks(app, registerAppModule)
 
+  app.use(flowzError());
   app.use(notFound());
   app.use(handler());
 };
