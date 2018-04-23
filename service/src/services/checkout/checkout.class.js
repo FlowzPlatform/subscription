@@ -95,23 +95,39 @@ var getThisSubscription = async function (id, app) {
   });
 }
 
+var getBasicSubscription = async function(id, app) {
+  return app.service('user-subscription').get(id).then(res => {
+    return res;
+  }).catch(err => {
+    return { error: err.name, message: err.message }
+  })
+}
+
 var createFunction = async (function(data,params, app) {
-  var thisSubscription = await (getThisSubscription(data.sub_id, app))
+  var thisSubscription = await (getThisSubscription(data.sub_id, app));
   if(thisSubscription.hasOwnProperty('error')) {
     return thisSubscription;
   } else if (thisSubscription.hasOwnProperty('status') && thisSubscription.status === false) {
     throw new errors.NotFound(err)
     return { error: 'NotFound', message: 'please select valid subscription plan' }
   }
+  let basicSubscription;
+  if (data.basicPlan) {
+    basicSubscription = await (getBasicSubscription(data.basicPlan, app));
+    if (basicSubscription.hasOwnProperty('error')) {
+      return basicSubscription;
+    }
+  }
 
   var paymentObj = await (payObj(data, thisSubscription.price))
   var config = {
     headers:  {
-    'Content-Type': 'application/json',
-    'X-api-token':  config1.x_api_token,
-    'authorization': params.query.authorization
+      'Content-Type': 'application/json',
+      'X-api-token':  config1.x_api_token,
+      'authorization': params.query.authorization
     }
   }
+  thisSubscription.basicPlan = data.basicPlan
   let update_trans, checkout_res;
   let userDetail = await (getUserPackage(config.headers.authorization))
   let transObj = {
@@ -152,11 +168,15 @@ var createFunction = async (function(data,params, app) {
       if(update_trans.hasOwnProperty('error')) {
         return update_trans;
       }
-      var packageObj;
-      if(userDetail.data.hasOwnProperty("package")){
-        packageObj = await (makePackageObj(thisSubscription, checkout_res.id, userDetail.data.package, userDetail));
+      let u_id = userDetail.data._id;
+      let packageObj;
+      let checkPoint;
+      if(basicSubscription.hasOwnProperty("details")){
+        packageObj = await (makeAddonPackageObj(thisSubscription, transaction_id, basicSubscription, userDetail));
+        checkPoint = await (userDetailsEntry(userDetail, packageObj[0], packageObj[1], u_id, config, checkout_res, app, transaction_id, transObj));
       } else {
-        packageObj = await (makePackageObj(thisSubscription, checkout_res.id, null, userDetail));
+        packageObj = await (makePackageObj(thisSubscription, transaction_id, null, userDetail));
+        checkPoint = await (userDetailsEntry(userDetail, packageObj, null, u_id, config, checkout_res, app, transaction_id, transObj));
         // var u_id = userDetail.data._id
         // axios.post(config1.api_url + 'user-subscription', packageObj)
         // packageObj.createdAt = new Date()
@@ -196,9 +216,9 @@ var createFunction = async (function(data,params, app) {
           // console.log("Error : ", err)
         }) */
       }
-      var u_id = userDetail.data._id;
-      packageObj.createdAt = new Date();
-      let checkPoint = await (userDetailsEntry(userDetail, packageObj, u_id, config, checkout_res, app, transaction_id, transObj));
+      
+      // packageObj.createdAt = new Date();
+      
       if (checkPoint.hasOwnProperty('error')) {
         checkPoint.transaction_id = transaction_id;
         return checkPoint;
@@ -226,46 +246,70 @@ let updateTransaction = function (app, transaction_id, transObj, auth_token) {
   })
 }
 
-let userDetailsEntry = async (function (userDetail, packageObj, u_id, config, checkout_res, app, transaction_id, transObj) {
-  let res = await (addUserSubscription(packageObj, app))
+let userDetailsEntry = async (function (userDetail, packageObj, basicPackageObj, u_id, config, checkout_res, app, transaction_id, transObj) {
+  let res = await (addUserSubscription(packageObj, basicPackageObj, app, transaction_id, transObj, config.headers.authorization))
   if(res.hasOwnProperty('error')) {
     res.transaction_id = transaction_id
     return res
   } else {
-    // console.log('=========addUserSubscription=========>', res)
-    let planName = res.id.substr(res.id.length - 5) + "-" +  packageObj.name + "-" + moment(packageObj.expiredOn).format('DD-MMM-YYYY')
-    if (userDetail.data.package) {
-      userDetail.data.package[res.id] = {"subscriptionId": res.id, "role": "admin", "name": planName}
-    } else {
-      userDetail.data.package={}
-      userDetail.data.package[res.id] = {"subscriptionId": res.id, "role": "admin", "name": planName}
-    }
-
-    let updUsrSub = await (updateUserPackageDetails(app, userDetail, u_id, config, res, transaction_id, transObj, config.headers.authorization));
-    if(updUsrSub.hasOwnProperty('error')) {
-      updUsrSub.transaction_id = transaction_id
-      return updUsrSub
-    } else {
-      // console.log('=========updateUserPackageDetails=========>', updUsrSub)
-      let revSub = await (reverseSubscription(res, app, transaction_id, transObj, config.headers.authorization));
-      if(revSub.hasOwnProperty('error')) {
-        revSub.transaction_id = transaction_id
-        return revSub
+    if (packageObj.type == 'basic') {
+      // console.log('=========addUserSubscription=========>', res)
+      let planName = res.id.substr(res.id.length - 5) + "-" +  packageObj.name + "-" + moment(packageObj.expiredOn).format('DD-MMM-YYYY')
+      if (userDetail.data.package) {
+        userDetail.data.package[res.id] = {"subscriptionId": res.id, "role": "admin", "name": planName}
+      } else {
+        userDetail.data.package={}
+        userDetail.data.package[res.id] = {"subscriptionId": res.id, "role": "admin", "name": planName}
       }
-      // console.log("=========reverseSubscription=========>", revSub)
+
+      let updUsrSub = await (updateUserPackageDetails(app, userDetail, u_id, config, res, transaction_id, transObj, config.headers.authorization));
+      if(updUsrSub.hasOwnProperty('error')) {
+        updUsrSub.transaction_id = transaction_id
+        return updUsrSub
+      } else {
+        // console.log('=========updateUserPackageDetails=========>', updUsrSub)
+        let revSub = await (reverseSubscription(res, app, transaction_id, transObj, config.headers.authorization));
+        if(revSub.hasOwnProperty('error')) {
+          revSub.transaction_id = transaction_id
+          return revSub
+        }
+        // console.log("=========reverseSubscription=========>", revSub)
+      }
     }
   }
   return true
 })
 
-let addUserSubscription = function(packageObj, app) {
-  let _promise = new Promise ((resolve, reject) => {
-    app.service('user-subscription').create(packageObj).then(res => {
-      resolve(res)
-    }).catch(err => {
-      resolve({ error: err.name, message: err.message })
+let addUserSubscription = function(packageObj, basicPackageObj, app, transaction_id, transObj, auth_token) {
+  let _promise, promise
+  if (basicPackageObj != null) {
+    _promise = new Promise ((resolve, reject) => {
+      app.service('user-addon').create(packageObj).then(res => {
+        transObj.transaction_status = 'user_subscribed'
+        resolve(res)
+      }).catch(err => {
+        resolve({ error: err.name, message: err.message })
+      })
     })
-  })
+    promise = new Promise ((resolve, reject) => {
+      app.service('user-subscription').update(basicPackageObj.id, basicPackageObj).then(res => {
+        transObj.transaction_status = 'completed'
+        resolve(res)
+      }).catch(err => {
+        resolve({ error: err.name, message: err.message })
+      })
+    })
+  } else {
+    _promise = new Promise ((resolve, reject) => {
+      app.service('user-subscription').create(packageObj).then(res => {
+        transObj.transaction_status = 'user_subscribed'
+        resolve(res)
+      }).catch(err => {
+        resolve({ error: err.name, message: err.message })
+      })
+    })
+  }
+  let update_trans = await (updateTransaction(app, transaction_id, transObj, auth_token));
   return Promise.resolve(_promise).then(ress => {
     return ress
   }).catch(errr => {
@@ -313,10 +357,9 @@ let reverseSubscription = async function (res, app, transaction_id, transObj, au
   })
 }
 
-
 let makePackageObj = async (function (subData, trans_id, subscribed, userDetail) {
-  var exdate
-  if (subscribed != null) {
+  var exdate = moment().add(subData.validity, 'months').format()
+  /* if (subscribed != null) {
     if(moment(subscribed.expiredOn).diff(moment().format(), 'months') <= 0) {
       exdate = moment().add(subData.validity, 'months').format()
     } else {
@@ -324,7 +367,7 @@ let makePackageObj = async (function (subData, trans_id, subscribed, userDetail)
     }
   } else {
     exdate = moment().add(subData.validity, 'months').format()
-  }
+  } */
   // console.log("exdate :",exdate)
   var detail = {}
   let module = _.groupBy(subData.details, "module")
@@ -355,9 +398,83 @@ let makePackageObj = async (function (subData, trans_id, subscribed, userDetail)
     sub_id : subData.id,
     trans_id: trans_id,
     name: subData.name,
+    type: subData.type,
     price: subData.price,
     time_unit: subData.time_unit,
+    createdAt: new Date(),
     validity: subData.validity
+  }
+})
+
+let makeAddonPackageObj = async (function (subData, trans_id, subscribed, userDetail) {
+  var exdate  = moment().add(subData.validity, 'months').format()
+  var updateDate = await (checkExpiry(subscribed.expiredOn))
+  subscribed.expiredOn = moment(updateDate).add(subData.validity, 'months').format()
+  subscribed.updatedOn = new Date();
+  /* if (subscribed != null) {
+    if(subData.validity != '0') {
+      subscribed.expiredOn = moment(subscribed.expiredOn).add(subData.validity, 'months').format()
+    } else {
+      exdate = subscribed.expiredOn
+    }
+  } else {
+    exdate = moment().add(subData.validity, 'months').format()
+  } */
+  var detail = {}
+  subData.details = await (_.filter(subData.details,function(o) {
+    return o.value > 0
+  }))
+  let module = _.groupBy(subData.details, "module")
+  Object.keys(module).forEach(function(key) {
+    let service = _.groupBy(module[key], "service")
+
+    for (let i = 0; i < module[key].length; i++) {
+      detail[module[key][i].module] = {}
+
+      Object.keys(service).forEach(function(k) {
+        detail[module[key][i].module][k] = {}
+
+        for (let j = 0; j < service[k].length; j++) {
+          if (service[k][j].value !== '') {
+            let actionVal = parseInt(service[k][j].value)
+            detail[module[key][i].module][k][service[k][j].action] = actionVal
+            if(subscribed != null ) {
+              // console.log('>>>1>>>', service[k], '>>>>2>>>', service[k][j], )
+              // console.log('>>>>>>> ', subscribed.details[module[key][i]], '>>', subscribed.details[module[key][i].module][k], ' >>> ', subscribed.details[module[key][i].module][k][service[k][j].action])
+              subscribed.details[module[key][i].module][k][service[k][j].action] += actionVal
+            }
+          }
+        }
+        if (Object.keys(detail[module[key][i].module][k]).length < 1) {
+        	delete detail[module[key][i].module][k]
+        }
+      })
+    }
+  })
+  return [{
+    userId: userDetail.data._id,
+    expiredOn : exdate,
+    details : detail,
+    sub_id : subData.id,
+    trans_id: trans_id,
+    name: subData.name,
+    type: subData.type,
+    basicPlan: subscribed.id,
+    price: subData.price,
+    time_unit: subData.time_unit,
+    createdAt: new Date(),
+    validity: subData.validity
+  }, subscribed]
+})
+
+let checkExpiry = async (function (exDate) {
+  let compDate = moment(exDate).format('YYYY-MM-DD')
+  let compWith = moment().format('YYYY-MM-DD')
+  let checkDate = moment(compDate).diff(compWith,'days')
+  if(checkDate <= 0) {
+    return moment().format()
+  } else {
+    return exDate
   }
 })
 
