@@ -97,6 +97,7 @@ var getThisSubscription = async function (id, app) {
 
 var getBasicSubscription = async function(id, app) {
   return app.service('user-subscription').get(id).then(res => {
+    // console.log('res>>>>>', res)
     return res;
   }).catch(err => {
     return { error: err.name, message: err.message }
@@ -111,8 +112,10 @@ var createFunction = async (function(data,params, app) {
     throw new errors.NotFound(err)
     return { error: 'NotFound', message: 'please select valid subscription plan' }
   }
-  let basicSubscription;
-  if (data.basicPlan) {
+  let basicSubscription = {};
+  // console.log('!!!!!!!!!!!!!!!!!!!!!!', data.basicPlan, typeof(data.basicPlan))
+  if (data.basicPlan != undefined) {
+    // console.log('@@@@@@@@@>>', typeof(data.basicPlan))
     basicSubscription = await (getBasicSubscription(data.basicPlan, app));
     if (basicSubscription.hasOwnProperty('error')) {
       return basicSubscription;
@@ -151,6 +154,7 @@ var createFunction = async (function(data,params, app) {
     checkout_res = await (axios.post(config1.pay_url, paymentObj, config).then(res => {
       return res.data;
     }).catch(err => {
+      // console.log('=============>ERROR', err)
       return { error: err };
     }));
     if(checkout_res.type == 'StripeCardError') {
@@ -165,16 +169,21 @@ var createFunction = async (function(data,params, app) {
       checkout_res.transaction_id = transaction_id;
       console.log('Payment Successfully Done!');
       update_trans = await (updateTransaction(app, transaction_id, transObj, config.headers.authorization));
+      // console.log('&&&&&&&&&&&&&>>>', update_trans)
       if(update_trans.hasOwnProperty('error')) {
+        // console.log('>>>>>>update_trans>>>>', update_trans)
         return update_trans;
       }
+      // console.log('$$$$$$$$$>>>', basicSubscription)
       let u_id = userDetail.data._id;
       let packageObj;
       let checkPoint;
       if(basicSubscription.hasOwnProperty("details")){
+        // console.log('>>>>basicSubscription>>>>', basicSubscription)
         packageObj = await (makeAddonPackageObj(thisSubscription, transaction_id, basicSubscription, userDetail));
         checkPoint = await (userDetailsEntry(userDetail, packageObj[0], packageObj[1], u_id, config, checkout_res, app, transaction_id, transObj));
       } else {
+        // console.log('>>>>transaction_id>>>>', transaction_id)
         packageObj = await (makePackageObj(thisSubscription, transaction_id, null, userDetail));
         checkPoint = await (userDetailsEntry(userDetail, packageObj, null, u_id, config, checkout_res, app, transaction_id, transObj));
         // var u_id = userDetail.data._id
@@ -225,6 +234,7 @@ var createFunction = async (function(data,params, app) {
       }
     }
   } else {
+    // console.log('++++++++++++ERROR')
     return {error: 'NotAuthenticated', message: 'Your session is expired please login again.'}
   }
   return checkout_res;
@@ -232,21 +242,27 @@ var createFunction = async (function(data,params, app) {
 
 let updateTransaction = function (app, transaction_id, transObj, auth_token) {
   transObj.updated_at = new Date();
+  // console.log('>>>>TRANSaction_id>>>>>', transaction_id)
   let _promise = new Promise ((resolve, reject) => {
     app.service('transactions').update(transaction_id, transObj, { headers: {'Authorization': auth_token }}).then(res => {
+      // console.log('>>>>RES>>>', res)
       resolve(res);
     }).catch(err => {
+      // console.log('>>>ERROR>>>', err)
       resolve({ error: err.name, message: err.message });
     });
   })
   return Promise.resolve(_promise).then(ress => {
+    // console.log('>>>>RES>>>', ress)
     return ress
   }).catch(errr => {
+    // console.log('>>>>>ERROR_@2', errr)
     return {error: errr.name, message: 'Internal server error.'}
   })
 }
 
 let userDetailsEntry = async (function (userDetail, packageObj, basicPackageObj, u_id, config, checkout_res, app, transaction_id, transObj) {
+  // console.log('>>>>>transaction_id_2>>>>>>', transaction_id)
   let res = await (addUserSubscription(packageObj, basicPackageObj, app, transaction_id, transObj, config.headers.authorization))
   if(res.hasOwnProperty('error')) {
     res.transaction_id = transaction_id
@@ -283,9 +299,11 @@ let userDetailsEntry = async (function (userDetail, packageObj, basicPackageObj,
 let addUserSubscription = function(packageObj, basicPackageObj, app, transaction_id, transObj, auth_token) {
   let _promise, promise
   if (basicPackageObj != null) {
+    // console.log('>>>>>>>>basicPackageObj NOT NULL>>>>', basicPackageObj)
     _promise = new Promise ((resolve, reject) => {
       app.service('user-addon').create(packageObj).then(res => {
         transObj.transaction_status = 'user_subscribed'
+        console.log('User ',  packageObj.userId, ' has subscribed addon package successfully..!');
         resolve(res)
       }).catch(err => {
         resolve({ error: err.name, message: err.message })
@@ -294,12 +312,14 @@ let addUserSubscription = function(packageObj, basicPackageObj, app, transaction
     promise = new Promise ((resolve, reject) => {
       app.service('user-subscription').update(basicPackageObj.id, basicPackageObj).then(res => {
         transObj.transaction_status = 'completed'
+        console.log('subscriptionId : ', packageObj.sub_id)
         resolve(res)
       }).catch(err => {
         resolve({ error: err.name, message: err.message })
       })
     })
   } else {
+    // console.log('>>>>>basicPackageObj NULL pkg>>>>>>', packageObj)
     _promise = new Promise ((resolve, reject) => {
       app.service('user-subscription').create(packageObj).then(res => {
         transObj.transaction_status = 'user_subscribed'
@@ -309,6 +329,7 @@ let addUserSubscription = function(packageObj, basicPackageObj, app, transaction
       })
     })
   }
+  // console.log('>>>>>>>transaction_id_3>>>>>>>', transaction_id)
   let update_trans = await (updateTransaction(app, transaction_id, transObj, auth_token));
   return Promise.resolve(_promise).then(ress => {
     return ress
@@ -324,7 +345,7 @@ let updateUserPackageDetails = async function(app, userDetail, u_id, config, res
     .then(res => {
       transObj.transaction_status = 'user_updated'
       transObj.paid_for_subscription = paidFor
-      console.log('User ',  u_id, ' has subscribed  package successfully..!')
+      console.log('User ',  u_id, ' has subscribed  package successfully..!');
       resolve(res)
     })
     .catch(err => {
