@@ -28,7 +28,9 @@
     "mocha": "mocha test/ --recursive"
   },
   "dependencies": {
+    "@feathersjs/authentication-jwt": "^2.0.1",
     "@feathersjs/errors": "^3.2.2",
+    "@feathersjs/feathers": "^3.1.5",
     "asyncawait": "1.0.6",
     "axios": "^0.17.1",
     "body-parser": "^1.18.2",

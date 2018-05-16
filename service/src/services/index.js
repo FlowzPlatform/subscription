@@ -14,6 +14,8 @@ const subscriptionInvitation = require('./subscription-invitation/subscription-i
 
 const transactions = require('./transactions/transactions.service.js');
 
+const cbPlan = require('./cb-plan/cb-plan.service.js');
+
 module.exports = function () {
   const app = this; // eslint-disable-line no-unused-vars
   app.configure(defaultSubscription);
@@ -29,4 +31,5 @@ module.exports = function () {
   app.configure(subscriptionInvitation);
   app.configure(roles);
   app.configure(transactions);
+  app.configure(cbPlan);
 };
