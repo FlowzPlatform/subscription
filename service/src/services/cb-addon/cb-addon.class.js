@@ -112,7 +112,7 @@ let updateAddon = function (id, data, params) {
 };
 
 let deleteAddon = function (id, params) {
-  return config.chargebee.addon.delete(id).request((error,result) => {
+  return config.chargebee.addon.delete(id).request((error, result) => {
     if (error) {
       return error;
     } else {

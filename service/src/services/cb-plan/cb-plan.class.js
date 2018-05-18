@@ -55,7 +55,13 @@ class Service {
   }
 
   patch (id, data, params) {
-    return Promise.resolve(data);
+    let result = unarchivePlan(id, params);
+
+    return Promise.resolve(result).then(res => {
+      return res.plan;
+    }).catch(err => {
+      return err;
+    });
   }
 
   remove (id, params) {
@@ -71,7 +77,7 @@ class Service {
 
 let getPlanList = function (params) {
   let limit = params.query.limit || 10;
-  return config.chargebee.plan.list({ paginate: false }).request((error, result) => {
+  return config.chargebee.plan.list({ limit: limit }).request((error, result) => {
     if (error) {
       return error;
     } else {
@@ -111,7 +117,17 @@ let updatePlan = function (id, data, params) {
 };
 
 let deletePlan = function (id, params) {
-  return config.chargebee.plan.delete(id).request((error,result) => {
+  return config.chargebee.plan.delete(id).request((error, result) => {
+    if (error) {
+      return error;
+    } else {
+      return result;
+    }
+  });
+};
+
+let unarchivePlan = function (id, params) {
+  return config.chargebee.plan.unarchive(id).request((error, result) => {
     if (error) {
       return error;
     } else {
