@@ -72,7 +72,7 @@ class Service {
 let getAddonList = function (params) {
   let limit = params.query.limit || 10;
 
-  return config.chargebee.addon.list({ paginate: false }).request((error, result) => {
+  return config.chargebee.addon.list({ limit: limit }).request((error, result) => {
     if (error) {
       return error;
     } else {

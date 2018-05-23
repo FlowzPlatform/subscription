@@ -18,6 +18,10 @@ const cbPlan = require('./cb-plan/cb-plan.service.js');
 
 const cbAddon = require('./cb-addon/cb-addon.service.js');
 
+const cbSubscription = require('./cb-subscription/cb-subscription.service.js');
+
+const cbCustomer = require('./cb-customer/cb-customer.service.js');
+
 module.exports = function () {
   const app = this; // eslint-disable-line no-unused-vars
   app.configure(defaultSubscription);
@@ -35,4 +39,6 @@ module.exports = function () {
   app.configure(transactions);
   app.configure(cbPlan);
   app.configure(cbAddon);
+  app.configure(cbSubscription);
+  app.configure(cbCustomer);
 };
