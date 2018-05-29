@@ -55,7 +55,13 @@ class Service {
   }
 
   patch (id, data, params) {
-    return Promise.resolve(data);
+    let result = unarchiveAddon(id, params);
+
+    return Promise.resolve(result).then(res => {
+      return res.addon;
+    }).catch(err => {
+      return err;
+    });
   }
 
   remove (id, params) {
@@ -113,6 +119,16 @@ let updateAddon = function (id, data, params) {
 
 let deleteAddon = function (id, params) {
   return config.chargebee.addon.delete(id).request((error, result) => {
+    if (error) {
+      return error;
+    } else {
+      return result;
+    }
+  });
+};
+
+let unarchiveAddon = function (id, params) {
+  return config.chargebee.addon.unarchive(id).request((error, result) => {
     if (error) {
       return error;
     } else {
