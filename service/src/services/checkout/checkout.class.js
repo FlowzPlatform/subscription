@@ -47,7 +47,7 @@ class Service {
   }
 
   create (data, params) {
-    var res = createFunction(data,params, params.app)
+    var res = createFunction(data,params, params.app);
     return Promise.resolve(res).then(resp => {
       return resp;
     }).catch(err => {
