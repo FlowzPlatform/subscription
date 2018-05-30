@@ -1,10 +1,10 @@
 const config = require('../config.js');
 const axios = require('axios');
-let async = require('asyncawait/async');
-let await = require('asyncawait/await');
-let rp = require('request-promise');
-let _ = require('lodash');
-let moment = require('moment');
+const async = require('asyncawait/async');
+const await = require('asyncawait/await');
+const rp = require('request-promise');
+const _ = require('lodash');
+const moment = require('moment');
 
 moment().format();
 
@@ -292,7 +292,11 @@ let updateSubscription = async (function (id, data, params) {
                 let actionVal = parseInt(service[k][j].value)
                 detail[module[key][i].module][k][service[k][j].action] = actionVal
                 if(subscribed != null ) {
-                  subscribed[module[key][i].module][k][service[k][j].action] += actionVal
+									if (subscribed[module[key][i].module][k] != undefined) {
+										if (subscribed[module[key][i].module][k][service[k][j].action] != undefined) {
+											subscribed[module[key][i].module][k][service[k][j].action] += actionVal
+										}
+									}
                 }
               }
             }
@@ -300,6 +304,7 @@ let updateSubscription = async (function (id, data, params) {
               delete detail[module[key][i].module][k]
             }
           });
+          break;
         }
       });
       
