@@ -10,6 +10,9 @@ then
     RANCHER_ACCESSKEY="$RANCHER_ACCESSKEY_MASTER";
     RANCHER_SECRETKEY="$RANCHER_SECRETKEY_MASTER";
     RANCHER_URL="$RANCHER_URL_MASTER";  
+    apiKey="$apiKey_master";
+    site="$site_master";
+    secret="$secret_master";
   }
 elif [ "$TRAVIS_BRANCH" = "develop" ]
 then
@@ -23,6 +26,9 @@ then
       RANCHER_ACCESSKEY="$RANCHER_ACCESSKEY_DEVELOP";
       RANCHER_SECRETKEY="$RANCHER_SECRETKEY_DEVELOP";
       RANCHER_URL="$RANCHER_URL_DEVELOP";
+      apiKey="$apiKey_develop";
+      site="$site_develop";
+      secret="$secret_develop";
   }
 elif [ "$TRAVIS_BRANCH" = "staging" ]
 then
@@ -36,6 +42,9 @@ then
       RANCHER_ACCESSKEY="$RANCHER_ACCESSKEY_STAGING";
       RANCHER_SECRETKEY="$RANCHER_SECRETKEY_STAGING";
       RANCHER_URL="$RANCHER_URL_STAGING";
+      apiKey="$apiKey_staging";
+      site="$site_staging";
+      secret="$secret_staging";
   }  
 else
   {
@@ -48,6 +57,9 @@ else
       RANCHER_ACCESSKEY="$RANCHER_ACCESSKEY_QA";
       RANCHER_SECRETKEY="$RANCHER_SECRETKEY_QA";
       RANCHER_URL="$RANCHER_URL_QA";  
+      apiKey="$apiKey_qa";
+      site="$site_qa";
+      secret="$secret_qa";
  }
 fi
 
@@ -59,5 +71,5 @@ curl -u ""$RANCHER_ACCESSKEY":"$RANCHER_SECRETKEY"" \
 -H 'Accept: application/json' \
 -H 'Content-Type: application/json' \
 -d '{
-     "inServiceStrategy":{"launchConfig": {"imageUuid":"docker:'$USERNAME'/subscription_backend_service_flowz:'$TAG'","kind": "container","labels":{"io.rancher.container.pull_image": "always","io.rancher.scheduler.affinity:host_label": "machine=cluster-flowz"},"ports": ["3039:3039/tcp","4039:4039/tcp"],"environment": {"RDBHost": "'"$RDBHost"'","RDBPort": "'"$RDBPort"'","rdb":"'"$rdb"'","x_api_token":"'"$x_api_token"'","domainKey":"'"$DOMAINKEY"'"},"healthCheck": {"type": "instanceHealthCheck","healthyThreshold": 2,"initializingTimeout": 60000,"interval": 2000,"name": null,"port": 3039,"recreateOnQuorumStrategyConfig": {"type": "recreateOnQuorumStrategyConfig","quorum": 1},"reinitializingTimeout": 60000,"responseTimeout": 60000,"strategy": "recreateOnQuorum","unhealthyThreshold": 3},"networkMode": "managed"}},"toServiceStrategy":null}' \
+     "inServiceStrategy":{"launchConfig": {"imageUuid":"docker:'$USERNAME'/subscription_backend_service_flowz:'$TAG'","kind": "container","labels":{"io.rancher.container.pull_image": "always","io.rancher.scheduler.affinity:host_label": "machine=cluster-flowz"},"ports": ["3039:3039/tcp","4039:4039/tcp"],"environment": {"RDBHost": "'"$RDBHost"'","RDBPort": "'"$RDBPort"'","rdb":"'"$rdb"'","x_api_token":"'"$x_api_token"'","domainKey":"'"$DOMAINKEY"'","apiKey":"'"$apiKey"'","site":"'"$site"'","secret":"'"$secret"'"},"healthCheck": {"type": "instanceHealthCheck","healthyThreshold": 2,"initializingTimeout": 60000,"interval": 2000,"name": null,"port": 3039,"recreateOnQuorumStrategyConfig": {"type": "recreateOnQuorumStrategyConfig","quorum": 1},"reinitializingTimeout": 60000,"responseTimeout": 60000,"strategy": "recreateOnQuorum","unhealthyThreshold": 3},"networkMode": "managed"}},"toServiceStrategy":null}' \
 $RANCHER_URL/v2-beta/projects/$ENV_ID/services/$SERVICE_ID?action=upgrade

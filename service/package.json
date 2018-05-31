@@ -28,10 +28,13 @@
     "mocha": "mocha test/ --recursive"
   },
   "dependencies": {
+    "@feathersjs/authentication-jwt": "^2.0.1",
     "@feathersjs/errors": "^3.2.2",
+    "@feathersjs/feathers": "^3.1.5",
     "asyncawait": "1.0.6",
     "axios": "^0.17.1",
     "body-parser": "^1.18.2",
+    "chargebee": "^2.3.9",
     "compression": "^1.7.1",
     "cors": "^2.8.4",
     "feathers": "^2.2.3",
@@ -46,6 +49,7 @@
     "feathers-rethinkdb": "^0.4.3",
     "feathers-socketio": "^2.0.1",
     "fibers": "^2.0.0",
+    "flowz-error-handler": "0.0.1",
     "flowz-subscription": "^0.2.1",
     "helmet": "^3.9.0",
     "lodash": "^4.17.4",

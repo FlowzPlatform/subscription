@@ -50,7 +50,6 @@ function before_create(hook) {
 
 async function before_find(hook) {
   let res = await validateUser(hook);
-  console.log(res)
   if (res.code == 401) {
     throw new errors.NotAuthenticated('Invalid token');
   } else {
@@ -74,8 +73,6 @@ async function before_find(hook) {
 }
 
 async function validateUser(data) {
-  console.log(apiHeaders.authorization)
-  
   return new Promise((resolve, reject) => {
     axios.get("http://api." + process.env.domainKey +'/auth/api/userdetails', {
       strictSSL: false,
