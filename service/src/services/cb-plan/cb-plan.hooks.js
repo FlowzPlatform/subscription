@@ -1,5 +1,4 @@
 const authentication = require('feathers-authentication');
-const jwt = require('@feathersjs/authentication-jwt');
 
 module.exports = {
   before: {

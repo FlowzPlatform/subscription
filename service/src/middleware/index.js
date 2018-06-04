@@ -9,17 +9,17 @@ module.exports = function () {
   // the error handler have to go last.
   const app = this;
 
-  subscription.moduleResource.moduleName = 'subscription'
+  subscription.moduleResource.moduleName = 'subscription';
   let registerAppModule = {
     'roles': ['find', 'get'],
     'invite': ['create', 'remove'],
     'subscription-plans': ['create', 'update', 'patch', 'remove']
-  }
+  };
 
-  subscription.moduleResource.registerAppModule = registerAppModule
-  subscription.moduleResource.appRoles = ['Superadmin', 'admin']
+  subscription.moduleResource.registerAppModule = registerAppModule;
+  subscription.moduleResource.appRoles = ['Superadmin', 'admin'];
   subscription.registeredAppModulesRole();
-  subscription.registerDynamicHooks(app, registerAppModule)
+  subscription.registerDynamicHooks(app, registerAppModule);
 
   app.use(flowzError());
   app.use(notFound());

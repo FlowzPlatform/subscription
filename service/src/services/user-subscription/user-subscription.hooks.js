@@ -48,7 +48,7 @@ function findBefore(hook) {
       delete hook.params.query.paginate;
     }
   } else {
-    console.log(hook.params.headers);
+    // console.log(hook.params.headers);
     throw new errors.NotAuthenticated('Invalid token');
   }
 }
