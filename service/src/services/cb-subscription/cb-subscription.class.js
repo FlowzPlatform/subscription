@@ -36,7 +36,13 @@ class Service {
   }
 
   get (id, params) {
-    let result = retrieveSubscription(id, params);
+    let result;
+    if (params.query.pause) {
+      // console.log('pauseSubscription ::', params.query); /* eslint-disable-line no-console */
+      result = pauseSubscription(id, params);
+    } else {
+      result = retrieveSubscription(id, params);
+    }
 
     return Promise.resolve(result).then(res => {
       return res;
@@ -112,6 +118,28 @@ let retrieveSubscription = function (id, params) {
       return result;
     }
   });
+};
+
+let pauseSubscription = function (id, params) {
+  if (params.query.pause == 'true') {
+    // console.log('Pause'); /* eslint-disable-line no-console*/
+    return config.chargebee.subscription.pause(id).request(function (error, result) {
+      if (error) {
+        return error;
+      } else {
+        return result;
+      }
+    });
+  } else if (params.query.pause == 'false') {
+    // console.log('Play'); /* eslint-disable-line no-console*/
+    return config.chargebee.subscription.resume(id).request(function (error, result) {
+      if (error) {
+        return error;
+      } else {
+        return result;
+      }
+    });
+  }
 };
 
 let createSubscription = async(function (data, params) {
