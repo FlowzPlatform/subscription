@@ -34,9 +34,10 @@ module.exports = {
   }
 };
 
-function modify(hook){
+function modify (hook) {
+  hook.params.app = hook.app;
   // console.log("hook......",hook)
   module.exports.apiHeaders = this.apiHeaders;
   // console.log("module.....",module.exports.apiHeaders.authorization)
-  hook.params.query.authorization = module.exports.apiHeaders.authorization
+  hook.params.query.authorization = module.exports.apiHeaders.authorization;
 }

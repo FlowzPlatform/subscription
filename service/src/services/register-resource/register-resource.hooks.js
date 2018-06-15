@@ -1,6 +1,4 @@
 
-const _ = require('lodash');
-var r = require('rethinkdbdash');
 let async = require('asyncawait/async');
 let await = require('asyncawait/await');
 
@@ -9,7 +7,7 @@ module.exports = {
     all: [
     ],
     find: [
-        hook => find2(hook)
+      hook => find2(hook)
     ],
     get: [
     ],
@@ -44,79 +42,84 @@ module.exports = {
 };
 
 var modify = async(function(hook){
-  // console.log("***********hook",hook.data)
-  // console.log("***********hook",hook.params)
-  let obj = {}
-  let action_obj = {}
-  let id = ''
-  let module = hook.data.module.toLowerCase()
-  let service = hook.data.service.toLowerCase()
+  // console.log('***********hook',hook.data);
+  // console.log('***********hook',hook.params);
+  let obj = {};
+  let action_obj = {};
+  let id = '';
+  let module = hook.data.module.toLowerCase();
+  let service = hook.data.service.toLowerCase();
   // console.log("++++++++++++++++++",module,service)
-  obj["module"] = module
-  obj["service"] = service
-  obj["actions"] = []
+  obj['module'] = module;
+  obj['service'] = service;
+  obj['actions'] = [];
   for(let key in hook.data.actions[0]) {
-    let key1 = key.toLowerCase()
-    let action1 = hook.data.actions[0][key].toLowerCase()
-    console.log("key1.action1",key1,action1)
-    action_obj[key1] = action1
+    let key1 = key.toLowerCase();
+    let action1 = hook.data.actions[0][key].toLowerCase();
+    // console.log('key1.action1',key1,action1);
+    action_obj[key1] = action1;
   }
-  obj["actions"].push(action_obj)
+  obj['actions'].push(action_obj);
 
-  var tdata = await(hook.app.service('/register-resource').find())
+  // console.log('module======', module);
+  var tdata = await(hook.app.service('/register-resource').find({
+    'query':{'module': module}
+  }));
 
-  console.log('tdata', tdata)
+  // console.log('tdata', tdata);
 
   if(tdata.data.length != 0){
-  for(let [i, mObj] of tdata.data.entries()) {
-    if(mObj.module == module && mObj.service == service){
-         id = mObj.id
-         hook.app.service('/register-resource').update(id,obj).then(result => {
-            //  console.log("result....",result)
-         });
-         hook.data = []
-         hook.result = {"data":"updated"}
-    }
-    else{
-       hook.data = obj
+    for(let [i, mObj] of tdata.data.entries()) { // eslint-disable-line no-unused-vars
+      if(mObj.module == module && mObj.service == service){
+        id = mObj.id;
+        hook.app.service('/register-resource').update(id,obj).then(result => {
+          console.log('result....',result); // eslint-disable-line no-console
+        });
+        hook.data = [];
+        hook.result = {'data':'updated','id':id};
+      }
+      else{
+        hook.data = obj;
+      }
     }
   }
- }
- else{
-    hook.data = obj
- }
-})
+  else{
+    hook.data = obj;
+  }
+});
 
-var find2 = async(function(hook){
+var find2 = async(function(hook) {
+  if (hook.params.query.module === undefined) {
+    hook.params.query.module = {$in: ['uploader', 'webbuilder', 'crm', 'subscription','vshopdata', 'vmail', 'dbetl', 'mom']};
+  }
+  hook.params.paginate = {default: 1000, max: 1000 };
   if(hook.params.query != undefined){
     // console.log("called....")
-  if(hook.params.query.method  && hook.params.query.route && hook.params.query.module){
-    let p_module1 = hook.params.query.module.toLowerCase()
-    let p_method1 = hook.params.query.method.toLowerCase()
-    let p_route1 = hook.params.query.route.toLowerCase()
+    if(hook.params.query.method  && hook.params.query.route && hook.params.query.module){
+      let p_module1 = hook.params.query.module.toLowerCase();
+      let p_method1 = hook.params.query.method.toLowerCase();
+      let p_route1 = hook.params.query.route.toLowerCase();
       // console.log("&&&&&&&&&&&&&&&",hook.params.query)
-      var tdata1 = await(hook.app.service('/register-resource').find())
+      var tdata1 = await(hook.app.service('/register-resource').find());
       // console.log('tdata', tdata1)
       if(tdata1.data.length != 0){
-        for(let [i, mObj] of tdata1.data.entries()) {
-            // console.log("mObj.actions",mObj.actions)
-            if(mObj.module == p_module1){
-              for(let key in mObj.actions[0])
-                {
-                  // console.log(key,mObj.actions[0][key])
-                  if(p_method1 == key && p_route1 == mObj.actions[0][key]){
-                    hook.result = mObj
-                  }
-                }
+        for(let [i, mObj] of tdata1.data.entries()) { // eslint-disable-line no-unused-vars
+          // console.log("mObj.actions",mObj.actions)
+          if(mObj.module == p_module1){
+            for(let key in mObj.actions[0])
+            {
+              // console.log(key,mObj.actions[0][key])
+              if(p_method1 == key && p_route1 == mObj.actions[0][key]){
+                hook.result = mObj;
+              }
             }
+          }
         }
 
       }
+    }
   }
-}
-
-
-})
+});
 
 
 
