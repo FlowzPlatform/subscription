@@ -36,19 +36,18 @@ module.exports = {
 
 function getAgain(hook) {
   if(hook.id) {
-    hook.params.query.subscriptionId = hook.id
+    hook.params.query.subscriptionId = hook.id;
     const query = Object.assign({
-    }, hook.params.query)
+    }, hook.params.query);
     return hook.app.service('reverse-subscription').find({ query }).then(response => {
       if (response.data.length === 1) {
-        hook.result = response.data[0]
+        hook.result = response.data[0];
       } else {
-        throw new errors.NotFound()
+        throw new errors.NotFound();
       }
       return hook;
-    })
-    .catch(err => {
-      throw new errors.NotFound()
-    })
+    }).catch(err => { //eslint-disable-line no-unused-vars
+      throw new errors.NotFound();
+    });
   }
 }
