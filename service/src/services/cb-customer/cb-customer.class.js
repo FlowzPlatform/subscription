@@ -40,7 +40,12 @@ class Service {
   }
 
   patch (id, data, params) {
-    return Promise.resolve(data);
+    let result = updateCustomerCard(id, data);
+    return Promise.resolve(result).then(res => {
+      return res;
+    }).catch(err => {
+      return err;
+    });
   }
 
   remove (id, params) {
@@ -73,6 +78,17 @@ let retrieveCustomer = function (id, params) {
 let createCustomer = function (data, params) {
   return config.chargebee.customer.create(data).request((error,result) => {
     if (error) {
+      return error;
+    } else {
+      return result;
+    }
+  });
+};
+
+let updateCustomerCard = function (id, data) {
+  return config.chargebee.card.update_card_for_customer(id, data).request((error, result) => {
+    if (error) {
+      //handle error
       return error;
     } else {
       return result;
