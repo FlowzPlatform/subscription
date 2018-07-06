@@ -50,7 +50,7 @@ function before_create(hook) {
 }
 
 let before_find = async((hook) => {
-  let res = await (this.validateUser(hook));
+  let res = await (validateUser(hook));
   if (res.code == 401) {
     throw new errors.NotAuthenticated('Invalid token');
   } else {
@@ -71,7 +71,7 @@ let before_find = async((hook) => {
   }
 });
 
-async (function validateUser(data) { // eslint-disable-line no-unused-vars
+let validateUser = (data) => { // eslint-disable-line no-unused-vars
   return new Promise((resolve, reject) => { // eslint-disable-line no-unused-vars
     axios.get('http://api.' + process.env.domainKey +'/auth/api/userdetails', {
       strictSSL: false,
@@ -85,7 +85,7 @@ async (function validateUser(data) { // eslint-disable-line no-unused-vars
       resolve({ 'code': 401 });
     });
   });
-});
+};
 
 
 function before_patch(hook) {
