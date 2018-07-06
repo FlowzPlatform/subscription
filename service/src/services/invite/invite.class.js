@@ -11,7 +11,7 @@ let SendEmailBodyInvite = emailTemp.sendInviteemail;
 let SendEmailBodyDecline = emailTemp.sendDeclineemail;
 
 let domainKey = process.env.domainKey;
-let baseUrl = 'http://api.'+ domainKey;
+let baseUrl = 'https://api.'+ domainKey;
 
 let schemaName = {
   'properties': {
@@ -95,13 +95,15 @@ class Service {
           // previous_packages[subscriptionId].role = _.omit(previous_packages[subscriptionId].role, Role1);
         }
         /* eslint-disable no-undef */
-        axios.put(baseUrl+'/user/updateuserdetails/' + userId, { package: previous_packages }, { headers: { 'Authorization': apiHeaders.authorization } }).then(async ((result) => {
+        /* eslint-disable */
+        axios.put(baseUrl+'/user/updateuserdetails/' + userId, { package: previous_packages }, { headers: { 'Authorization': apiHeaders.authorization } })
+        .then(async ((result) => {
           if (result.data.code == 201) {
             let subscription_invite = await (self.subscription_invitation(data , res ));
             self.sendEmail(data, res);
           }
           resolve(result.data); 
-        }).catch((err) => {
+        })).catch((err) => {
           let errorObj = {};
           if(apiHeaders.authorization == undefined) {
             errorObj.statusText = 'missing Authorization header';
@@ -115,7 +117,7 @@ class Service {
             resolve (errorObj);
           }
           /* eslint-disable no-undef */
-        }));
+        });
       })).catch((err) => {
         let errorObj = {};
         errorObj.statusText = 'Not Found';
