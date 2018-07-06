@@ -122,7 +122,7 @@ class Service {
         let errorObj = {};
         errorObj.statusText = 'Not Found';
         errorObj.status = 404;
-        errorObj.data = 'No data found with this email ID:: 123456';
+        errorObj.data = 'No data found with this email ID';
         resolve(errorObj);
       });
     });
