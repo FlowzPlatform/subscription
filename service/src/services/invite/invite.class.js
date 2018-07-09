@@ -96,6 +96,7 @@ class Service {
         }
         /* eslint-disable no-undef */
         /* eslint-disable */
+        console.log('authorization apiHeaders>>>> ', apiHeaders)
         axios.put(baseUrl+'/user/updateuserdetails/' + userId, { package: previous_packages }, { headers: { 'Authorization': apiHeaders.authorization } })
         .then(async ((result) => {
           if (result.data.code == 201) {
@@ -104,6 +105,7 @@ class Service {
           }
           resolve(result.data); 
         })).catch((err) => {
+          console.log('authorization ERROR >>>> ', err)
           let errorObj = {};
           if(apiHeaders.authorization == undefined) {
             errorObj.statusText = 'missing Authorization header';
