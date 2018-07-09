@@ -95,31 +95,29 @@ class Service {
           // previous_packages[subscriptionId].role = _.omit(previous_packages[subscriptionId].role, Role1);
         }
         /* eslint-disable no-undef */
-        /* eslint-disable */
-        console.log('authorization apiHeaders>>>> ', apiHeaders)
-        axios.put(baseUrl+'/user/updateuserdetails/' + userId, { package: previous_packages }, { headers: { 'Authorization': apiHeaders.authorization } })
-        .then(async ((result) => {
-          if (result.data.code == 201) {
-            let subscription_invite = await (self.subscription_invitation(data , res ));
-            self.sendEmail(data, res);
-          }
-          resolve(result.data); 
-        })).catch((err) => {
-          console.log('authorization ERROR >>>> ', err)
-          let errorObj = {};
-          if(apiHeaders.authorization == undefined) {
-            errorObj.statusText = 'missing Authorization header';
-            errorObj.status = 404;
-            errorObj.data = '\'Auth token is required in header\'';
-            resolve (errorObj);
-          } else {
+        if(!params.headers || !params.headers.authorization){
+          let errorObj = {
+            statusText: 'missing Authorization header',
+            status: 404,
+            data: '\'Auth token is required in header\''
+          };
+          resolve (errorObj);
+        }
+        axios.put(baseUrl+'/user/updateuserdetails/' + userId, { package: previous_packages }, { headers: { 'Authorization': params.headers.authorization } })
+          .then(async ((result) => {
+            if (result.data.code == 201) {
+              let subscription_invite = await (self.subscription_invitation(data , res ));
+              self.sendEmail(data, res, params.headers.authorization);
+            }
+            resolve(result.data); 
+          })).catch((err) => {
+            let errorObj = {};
             errorObj.statusText = err.response.statusText;
             errorObj.status = err.response.status;
             errorObj.data = err.response.data;
             resolve (errorObj);
-          }
           /* eslint-disable no-undef */
-        });
+          });
       })).catch((err) => {
         let errorObj = {};
         errorObj.statusText = 'Not Found';
@@ -132,7 +130,7 @@ class Service {
     
   }
 
-  subscription_invitation(data , res) {
+  subscription_invitation(data, res) {
     let self = this;
     this.app.service('subscription-invitation').find({query : { 'toEmail': data.toEmail, 'subscriptionId': data.subscriptionId, 'isDeleted': false }})
       .then(function (response) {
@@ -158,15 +156,13 @@ class Service {
       }).catch(function (err) {
         return err;
       });
-
-
     // this.app.service("subscription-invitation").create(data).then(function (response){
     // }).catch(function(err){
     //   return err
     // })
   }
 
-  sendEmail(data , res) {
+  sendEmail(data, res, authToken) {
     let SendEmailBody = SendEmailBodyInvite.replace(/WriteSenderNameHere/i, data.fromEmail);
     SendEmailBody = SendEmailBody.replace(/DOMAIN/g, 'https://www.dashboard.' + domainKey);
     SendEmailBody = SendEmailBody.replace(/SYSTEMNAME/g, Object.keys(data.role)[0]);
@@ -174,7 +170,7 @@ class Service {
    
     axios({ method: 'post',
       url: baseUrl+'/vmailmicro/sendEmail',
-      headers: {'Authorization': apiHeaders.authorization},
+      headers: {'Authorization': authToken},
       data: { 'to': data.toEmail, 'from': data.fromEmail, 'subject': 'Invitation from Flowz', 'body': SendEmailBody} }).then(async ((result) => {
       return true;
     })).catch(function(err){
@@ -182,7 +178,7 @@ class Service {
     });
   }
 
-  sendDeclineEmail(params, res) {
+  sendDeclineEmail(params, res, authToken) {
     var SendEmailBody = SendEmailBodyDecline.replace(/WriteSenderNameHere/i, params.query.fromEmail);
     SendEmailBody = SendEmailBody.replace(/DOMAIN/g, 'https://www.dashboard.' + domainKey);
     SendEmailBody = SendEmailBody.replace(/SYSTEMNAME/g, Object.keys(params.query.role)[0]);
@@ -190,7 +186,7 @@ class Service {
     axios({
       method: 'post',
       url: baseUrl + '/vmailmicro/sendEmail',
-      headers: { 'Authorization': apiHeaders.authorization },
+      headers: { 'Authorization': authToken },
       data: { 'to': params.query.toEmail, 'from': params.query.fromEmail, 'subject': 'Your role is now no longer with Flowz.', 'body': SendEmailBody }
     }).then(async ((result) => {
       return true;
@@ -235,23 +231,26 @@ class Service {
             delete previous_packages[subscriptionId];
           }
         }
-        axios.put(baseUrl + '/user/updateuserdetails/' + userId, { package: previous_packages }, { headers: { 'Authorization': apiHeaders.authorization }}).then(async ((result) => {
+				
+        if(!params.headers || !params.headers.authorization){
+          let errorObj = {
+            statusText: 'missing Authorization header',
+            status: 404,
+            data: '\'Auth token is required in header\''
+          };
+          resolve (errorObj);
+        }
+				
+        axios.put(baseUrl + '/user/updateuserdetails/' + userId, { package: previous_packages }, { headers: { 'Authorization': params.headers.authorization }}).then(async ((result) => {
           let subscription_invite = await (self.subscription_invitation_remove(params, res));
-          self.sendDeclineEmail(params , res);
+          self.sendDeclineEmail(params, res, params.headers.authorization);
           resolve(result.data);
         })).catch(function (err) {
           let errorObj = {};
-          if (apiHeaders.authorization == undefined) {
-            errorObj.statusText = 'missing Authorization header';
-            errorObj.status = 404;
-            errorObj.data = '\'Auth token is required in header\'';
-            resolve(errorObj);
-          } else {
-            errorObj.statusText = err.response.statusText;
-            errorObj.status = err.response.status;
-            errorObj.data = err.response.data;
-            resolve(errorObj);
-          }
+          errorObj.statusText = err.response.statusText;
+          errorObj.status = err.response.status;
+          errorObj.data = err.response.data;
+          resolve(errorObj);
         });
       })).catch(function (err) {
         let errorObj = {};
