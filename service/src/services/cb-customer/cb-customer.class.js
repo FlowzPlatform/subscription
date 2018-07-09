@@ -55,8 +55,18 @@ class Service {
 
 let getCustomerList = function (params) {
   let limit = params.query.limit || 10;
+  let email = params.query.email;
+  let first_name = params.query.first_name;
+  let last_name = params.query.last_name;
 
-  return config.chargebee.customer.list({ limit: limit }).request((error, result) => {
+  let req_obj = { 
+    limit : limit 
+  };
+  req_obj['email[is]'] = email;
+  req_obj['first_name[starts_with]'] = first_name;
+  req_obj['last_name[starts_with]'] = last_name;
+  
+  return config.chargebee.customer.list(req_obj).request((error, result) => {
     if (error) {
       return error;
     } else {

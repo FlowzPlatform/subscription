@@ -96,11 +96,13 @@ let subscriptionList = function (params) {
   let limit = params.query.limit || 10;
   let user_id = params.query.customer_id;
   let plan_id = params.query.plan_id;
+  let status = params.query.status;
   let req_obj = { 
     limit : limit 
   };
   req_obj['customer_id[is]'] = user_id;
   req_obj['plan_id[is]'] = plan_id;
+  req_obj['status[is]'] = status;
   return config.chargebee.subscription.list(req_obj).request(function (error, result) {
     if (error) {
       return error;
