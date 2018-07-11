@@ -103,11 +103,11 @@ class Service {
           };
           resolve (errorObj);
         }
-				// let user = await (self.updateuserdetails(userId,previous_packages,params));
+        // let user = await (self.updateuserdetails(userId,previous_packages,params));
 
         return self.updateuserdetails(userId,previous_packages,params).then(r=>{
-					return {res:res,userDetail:r}
-				});
+          return {res:res,userDetail:r};
+        });
 
         // axios.put(baseUrl+'/user/updateuserdetails/' + userId, { package: previous_packages }, { headers: { 'Authorization': params.headers.authorization } })
         //   .then(async ((result) => {
