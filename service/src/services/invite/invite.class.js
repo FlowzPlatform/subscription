@@ -106,7 +106,7 @@ class Service {
         axios.put(baseUrl+'/user/updateuserdetails/' + userId, { package: previous_packages }, { headers: { 'Authorization': params.headers.authorization } })
           .then(async ((result) => {
             if (result.data.code == 201) {
-              let subscription_invite = await (self.subscription_invitation(data , res ));
+              let subscription_invite = await (self.subscription_invitation(data, res, params ));
               self.sendEmail(data, res, params.headers.authorization);
             }
             resolve(result.data); 
@@ -126,13 +126,11 @@ class Service {
         resolve(errorObj);
       });
     });
-
-    
   }
 
-  subscription_invitation(data, res) {
+  subscription_invitation(data, res, params) {
     let self = this;
-    this.app.service('subscription-invitation').find({query : { 'toEmail': data.toEmail, 'subscriptionId': data.subscriptionId, 'isDeleted': false }})
+    this.app.service('subscription-invitation').find({query : { 'toEmail': data.toEmail, 'subscriptionId': data.subscriptionId, 'isDeleted': false }, headers: { 'Authorization': params.headers.authorization }})
       .then(function (response) {
         if (response.data.length == 0) {
           self.app.service('subscription-invitation').create(data).then(function (response){
@@ -140,7 +138,6 @@ class Service {
             return err;
           });
         } else {
-          // console.log(response.data);
           response.data[0].isDeleted = true;
           self.app.service('subscription-invitation').patch(response.data[0].id, response.data[0] , '').then(function (response2) {
             // console.log('response2-----' ,response2);
@@ -151,17 +148,12 @@ class Service {
           }).catch(function (err) {
             return err;
           });
-        
         }
       }).catch(function (err) {
         return err;
       });
-    // this.app.service("subscription-invitation").create(data).then(function (response){
-    // }).catch(function(err){
-    //   return err
-    // })
   }
-
+	
   sendEmail(data, res, authToken) {
     let SendEmailBody = SendEmailBodyInvite.replace(/WriteSenderNameHere/i, data.fromEmail);
     SendEmailBody = SendEmailBody.replace(/DOMAIN/g, 'https://www.dashboard.' + domainKey);
