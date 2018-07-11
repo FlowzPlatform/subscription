@@ -11,7 +11,7 @@ let SendEmailBodyInvite = emailTemp.sendInviteemail;
 let SendEmailBodyDecline = emailTemp.sendDeclineemail;
 
 let domainKey = process.env.domainKey;
-let baseUrl = 'http://api.'+ domainKey;
+let baseUrl = 'https://api.'+ domainKey;
 
 let schemaName = {
   'properties': {
@@ -65,7 +65,7 @@ class Service {
     return new Promise((resolve , reject ) => {
       axios.post(baseUrl+'/auth/api/userdetailsbyemail', {
         'email': data.toEmail
-      }).then(async ((res) => {
+      }).then((res) => {
         userId = res.data.data[0]._id;
         previous_packages = res.data.data[0].package;
         if(previous_packages == undefined || previous_packages.length == 0){
@@ -95,82 +95,93 @@ class Service {
           // previous_packages[subscriptionId].role = _.omit(previous_packages[subscriptionId].role, Role1);
         }
         /* eslint-disable no-undef */
-        axios.put(baseUrl+'/user/updateuserdetails/' + userId, { package: previous_packages }, { headers: { 'Authorization': apiHeaders.authorization } }).then(async ((result) => {
-          if (result.data.code == 201) {
-            let subscription_invite = await (self.subscription_invitation(data , res ));
-            self.sendEmail(data, res);
-          }
-          resolve(result.data); 
-        }).catch((err) => {
-          let errorObj = {};
-          if(apiHeaders.authorization == undefined) {
-            errorObj.statusText = 'missing Authorization header';
-            errorObj.status = 404;
-            errorObj.data = '\'Auth token is required in header\'';
-            resolve (errorObj);
-          } else {
-            errorObj.statusText = err.response.statusText;
-            errorObj.status = err.response.status;
-            errorObj.data = err.response.data;
-            resolve (errorObj);
-          }
-          /* eslint-disable no-undef */
-        }));
+        if(!params.headers || !params.headers.authorization){
+          let errorObj = {
+            statusText: 'missing Authorization header',
+            status: 404,
+            data: '\'Auth token is required in header\''
+          };
+          resolve (errorObj);
+        }
+        return self.updateuserdetails(userId,previous_packages,params).then(r => {
+          return {res:res,userDetail:r};
+        });
+      }).then(async ((result)=>{
+        let userDetailResult=result.userDetail;
+        let res=result.res;
+        if (userDetailResult.data.code == 201) {
+          let subscription_invite = await (self.subscription_invitation(data, res, params ));
+          self.sendEmail(data, res, params.headers.authorization);
+        }
+        resolve(userDetailResult.data);
       })).catch((err) => {
         let errorObj = {};
-        errorObj.statusText = 'Not Found';
-        errorObj.status = 404;
-        errorObj.data = 'No data found with this email ID';
+        if (err.response.data === 'data not found!') {
+          errorObj.statusText = 'Not Found';
+          errorObj.status = 404;
+          errorObj.data = 'No data found with this email ID';
+        } else {
+          errorObj.statusText = err.response.statusText;
+          errorObj.status = err.response.status;
+          errorObj.data = err.response.data;
+        }
         resolve(errorObj);
       });
     });
-
-    
+  }
+	
+  updateuserdetails(userId,previous_packages,params){
+    return axios.put(baseUrl+'/user/updateuserdetails/' + userId, { package: previous_packages }, { headers: { 'Authorization': params.headers.authorization } })
+      .then(((result) => {
+        return result; 
+      })).catch((err) => {
+        let errorObj = {};
+        errorObj.statusText = err.response.statusText;
+        errorObj.status = err.response.status;
+        errorObj.data = err.response.data;
+        throw(errorObj);
+        /* eslint-disable no-undef */
+      });
   }
 
-  subscription_invitation(data , res) {
+  subscription_invitation(data, res, params) {
     let self = this;
-    this.app.service('subscription-invitation').find({query : { 'toEmail': data.toEmail, 'subscriptionId': data.subscriptionId, 'isDeleted': false }})
+    // return axios.get(baseUrl+'/subscription/subscription-invitation', {query : { 'toEmail': data.toEmail, 'subscriptionId': data.subscriptionId, 'isDeleted': false }, headers: { 'Authorization': params.headers.authorization }})
+    return axios({
+      method: 'get',
+      url: baseUrl+'/subscription/subscription-invitation?toEmail='+data.toEmail+'&subscriptionId='+data.subscriptionId+'&isDeleted=false', 
+      headers: { 'Authorization': params.headers.authorization }
+    })
       .then(function (response) {
-        if (response.data.length == 0) {
-          self.app.service('subscription-invitation').create(data).then(function (response){
+        if (response.data.data.length == 0) {
+          return self.app.service('subscription-invitation').create(data).then(function (response){
           }).catch(function(err){
-            return err;
+            throw(err);
           });
         } else {
-          // console.log(response.data);
-          response.data[0].isDeleted = true;
-          self.app.service('subscription-invitation').patch(response.data[0].id, response.data[0] , '').then(function (response2) {
-            // console.log('response2-----' ,response2);
+          response.data.data[0].isDeleted = true;
+          return self.app.service('subscription-invitation').patch(response.data.data[0].id, response.data.data[0] , '').then(function (response2) {
             self.app.service('subscription-invitation').create(data).then(function (response) {
             }).catch(function (err) {
-              return err;
+              throw(err);
             });
           }).catch(function (err) {
-            return err;
+            throw(err);
           });
-        
         }
       }).catch(function (err) {
-        return err;
+        throw(err);
       });
-
-
-    // this.app.service("subscription-invitation").create(data).then(function (response){
-    // }).catch(function(err){
-    //   return err
-    // })
   }
-
-  sendEmail(data , res) {
+	
+  sendEmail(data, res, authToken) {
     let SendEmailBody = SendEmailBodyInvite.replace(/WriteSenderNameHere/i, data.fromEmail);
     SendEmailBody = SendEmailBody.replace(/DOMAIN/g, 'https://www.dashboard.' + domainKey);
     SendEmailBody = SendEmailBody.replace(/SYSTEMNAME/g, Object.keys(data.role)[0]);
     SendEmailBody = SendEmailBody.replace(/ROLE/g, Object.values(data.role)[0]);
-   
     axios({ method: 'post',
       url: baseUrl+'/vmailmicro/sendEmail',
-      headers: {'Authorization': apiHeaders.authorization},
+      headers: {'Authorization': authToken},
       data: { 'to': data.toEmail, 'from': data.fromEmail, 'subject': 'Invitation from Flowz', 'body': SendEmailBody} }).then(async ((result) => {
       return true;
     })).catch(function(err){
@@ -178,7 +189,7 @@ class Service {
     });
   }
 
-  sendDeclineEmail(params, res) {
+  sendDeclineEmail(params, res, authToken) {
     var SendEmailBody = SendEmailBodyDecline.replace(/WriteSenderNameHere/i, params.query.fromEmail);
     SendEmailBody = SendEmailBody.replace(/DOMAIN/g, 'https://www.dashboard.' + domainKey);
     SendEmailBody = SendEmailBody.replace(/SYSTEMNAME/g, Object.keys(params.query.role)[0]);
@@ -186,7 +197,7 @@ class Service {
     axios({
       method: 'post',
       url: baseUrl + '/vmailmicro/sendEmail',
-      headers: { 'Authorization': apiHeaders.authorization },
+      headers: { 'Authorization': authToken },
       data: { 'to': params.query.toEmail, 'from': params.query.fromEmail, 'subject': 'Your role is now no longer with Flowz.', 'body': SendEmailBody }
     }).then(async ((result) => {
       return true;
@@ -231,23 +242,26 @@ class Service {
             delete previous_packages[subscriptionId];
           }
         }
-        axios.put(baseUrl + '/user/updateuserdetails/' + userId, { package: previous_packages }, { headers: { 'Authorization': apiHeaders.authorization }}).then(async ((result) => {
+				
+        if(!params.headers || !params.headers.authorization){
+          let errorObj = {
+            statusText: 'missing Authorization header',
+            status: 404,
+            data: '\'Auth token is required in header\''
+          };
+          resolve (errorObj);
+        }
+				
+        axios.put(baseUrl + '/user/updateuserdetails/' + userId, { package: previous_packages }, { headers: { 'Authorization': params.headers.authorization }}).then(async ((result) => {
           let subscription_invite = await (self.subscription_invitation_remove(params, res));
-          self.sendDeclineEmail(params , res);
+          self.sendDeclineEmail(params, res, params.headers.authorization);
           resolve(result.data);
         })).catch(function (err) {
           let errorObj = {};
-          if (apiHeaders.authorization == undefined) {
-            errorObj.statusText = 'missing Authorization header';
-            errorObj.status = 404;
-            errorObj.data = '\'Auth token is required in header\'';
-            resolve(errorObj);
-          } else {
-            errorObj.statusText = err.response.statusText;
-            errorObj.status = err.response.status;
-            errorObj.data = err.response.data;
-            resolve(errorObj);
-          }
+          errorObj.statusText = err.response.statusText;
+          errorObj.status = err.response.status;
+          errorObj.data = err.response.data;
+          resolve(errorObj);
         });
       })).catch(function (err) {
         let errorObj = {};
