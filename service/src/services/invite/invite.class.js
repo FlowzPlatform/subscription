@@ -124,24 +124,28 @@ class Service {
         //     resolve (errorObj);
         //   /* eslint-disable no-undef */
         //   });
-      }).then(result=>{
+      }).then(async ((result)=>{
         let userDetailResult=result.userDetail;
         let res=result.res;
+				console.log('userDetailResult::::', userDetailResult) // eslint-disable-line
         if (userDetailResult.data.code == 201) {
-          let subscription_invite = self.subscription_invitation(data, res, params );
+					console.log('201::::', userDetailResult) // eslint-disable-line
+          let subscription_invite = await (self.subscription_invitation(data, res, params ));
           self.sendEmail(data, res, params.headers.authorization);
         }
         resolve(userDetailResult.data);
-      }).catch((err) => {
-        // let errorObj = {};
-        // errorObj.statusText = 'Not Found';
-        // errorObj.status = 404;
-        // errorObj.data = 'No data found with this email ID';
-				console.log('Invite Create Catch:: ', err) // eslint-disable-line
+      })).catch((err) => {
         let errorObj = {};
-        errorObj.statusText = err.response.statusText;
-        errorObj.status = err.response.status;
-        errorObj.data = err.response.data;
+				console.log('Invite Create Catch:: ', err) // eslint-disable-line
+        if (err.response.data === 'data not found!') {
+          errorObj.statusText = 'Not Found';
+          errorObj.status = 404;
+          errorObj.data = 'No data found with this email ID';
+        } else {
+          errorObj.statusText = err.response.statusText;
+          errorObj.status = err.response.status;
+          errorObj.data = err.response.data;
+        }
         resolve(errorObj);
       });
     });
@@ -163,16 +167,24 @@ class Service {
 
   subscription_invitation(data, res, params) {
     let self = this;
-    return this.app.service('subscription-invitation').find({query : { 'toEmail': data.toEmail, 'subscriptionId': data.subscriptionId, 'isDeleted': false }, headers: { 'Authorization': params.headers.authorization }})
+		console.log('subscription_invitation::: ') // eslint-disable-line
+    // return this.app.service('subscription-invitation').find({query : { 'toEmail': data.toEmail, 'subscriptionId': data.subscriptionId, 'isDeleted': false }, headers: { 'Authorization': params.headers.authorization }})
+    // return axios.get(baseUrl+'/subscription/subscription-invitation', {query : { 'toEmail': data.toEmail, 'subscriptionId': data.subscriptionId, 'isDeleted': false }, headers: { 'Authorization': params.headers.authorization }})
+    return axios({
+      method: 'get',
+      url: baseUrl+'/subscription/subscription-invitation?toEmail='+data.toEmail+'&subscriptionId='+data.subscriptionId+'&isDeleted=false', 
+      headers: { 'Authorization': params.headers.authorization }
+    })
       .then(function (response) {
-        if (response.data.length == 0) {
+				console.log('response::', response) // eslint-disable-line
+        if (response.data.data.length == 0) {
           return self.app.service('subscription-invitation').create(data).then(function (response){
           }).catch(function(err){
             throw(err);
           });
         } else {
-          response.data[0].isDeleted = true;
-          return self.app.service('subscription-invitation').patch(response.data[0].id, response.data[0] , '').then(function (response2) {
+          response.data.data[0].isDeleted = true;
+          return self.app.service('subscription-invitation').patch(response.data.data[0].id, response.data.data[0] , '').then(function (response2) {
             // console.log('response2-----' ,response2);
             self.app.service('subscription-invitation').create(data).then(function (response) {
             }).catch(function (err) {
@@ -183,6 +195,7 @@ class Service {
           });
         }
       }).catch(function (err) {
+				console.log('ERROR::', err) // eslint-disable-line
         throw(err);
       });
   }
@@ -192,7 +205,7 @@ class Service {
     SendEmailBody = SendEmailBody.replace(/DOMAIN/g, 'https://www.dashboard.' + domainKey);
     SendEmailBody = SendEmailBody.replace(/SYSTEMNAME/g, Object.keys(data.role)[0]);
     SendEmailBody = SendEmailBody.replace(/ROLE/g, Object.values(data.role)[0]);
-   
+   console.log('subscription_invitation::: ') // eslint-disable-line
     axios({ method: 'post',
       url: baseUrl+'/vmailmicro/sendEmail',
       headers: {'Authorization': authToken},
