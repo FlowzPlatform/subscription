@@ -65,7 +65,7 @@ class Service {
     return new Promise((resolve , reject ) => {
       axios.post(baseUrl+'/auth/api/userdetailsbyemail', {
         'email': data.toEmail
-      }).then(async ((res) => {
+      }).then((res) => {
         userId = res.data.data[0]._id;
         previous_packages = res.data.data[0].package;
         if(previous_packages == undefined || previous_packages.length == 0){
@@ -103,54 +103,87 @@ class Service {
           };
           resolve (errorObj);
         }
-        axios.put(baseUrl+'/user/updateuserdetails/' + userId, { package: previous_packages }, { headers: { 'Authorization': params.headers.authorization } })
-          .then(async ((result) => {
-            if (result.data.code == 201) {
-              let subscription_invite = await (self.subscription_invitation(data, res, params ));
-              self.sendEmail(data, res, params.headers.authorization);
-            }
-            resolve(result.data); 
-          })).catch((err) => {
-            let errorObj = {};
-            errorObj.statusText = err.response.statusText;
-            errorObj.status = err.response.status;
-            errorObj.data = err.response.data;
-            resolve (errorObj);
-          /* eslint-disable no-undef */
-          });
-      })).catch((err) => {
+				// let user = await (self.updateuserdetails(userId,previous_packages,params));
+
+        return self.updateuserdetails(userId,previous_packages,params).then(r=>{
+					return {res:res,userDetail:r}
+				});
+
+        // axios.put(baseUrl+'/user/updateuserdetails/' + userId, { package: previous_packages }, { headers: { 'Authorization': params.headers.authorization } })
+        //   .then(async ((result) => {
+        //     if (result.data.code == 201) {
+        //       let subscription_invite = await (self.subscription_invitation(data, res, params ));
+        //       self.sendEmail(data, res, params.headers.authorization);
+        //     }
+        //     resolve(result.data); 
+        //   })).catch((err) => {
+        //     let errorObj = {};
+        //     errorObj.statusText = err.response.statusText;
+        //     errorObj.status = err.response.status;
+        //     errorObj.data = err.response.data;
+        //     resolve (errorObj);
+        //   /* eslint-disable no-undef */
+        //   });
+      }).then(result=>{
+        let userDetailResult=result.userDetail;
+        let res=result.res;
+        if (userDetailResult.data.code == 201) {
+          let subscription_invite = self.subscription_invitation(data, res, params );
+          self.sendEmail(data, res, params.headers.authorization);
+        }
+        resolve(userDetailResult.data);
+      }).catch((err) => {
+        // let errorObj = {};
+        // errorObj.statusText = 'Not Found';
+        // errorObj.status = 404;
+        // errorObj.data = 'No data found with this email ID';
+				console.log('Invite Create Catch:: ', err) // eslint-disable-line
         let errorObj = {};
-        errorObj.statusText = 'Not Found';
-        errorObj.status = 404;
-        errorObj.data = 'No data found with this email ID';
+        errorObj.statusText = err.response.statusText;
+        errorObj.status = err.response.status;
+        errorObj.data = err.response.data;
         resolve(errorObj);
       });
     });
   }
+	
+  updateuserdetails(userId,previous_packages,params){
+    return axios.put(baseUrl+'/user/updateuserdetails/' + userId, { package: previous_packages }, { headers: { 'Authorization': params.headers.authorization } })
+      .then(((result) => {
+        return result; 
+      })).catch((err) => {
+        let errorObj = {};
+        errorObj.statusText = err.response.statusText;
+        errorObj.status = err.response.status;
+        errorObj.data = err.response.data;
+        throw(errorObj);
+        /* eslint-disable no-undef */
+      });
+  }
 
   subscription_invitation(data, res, params) {
     let self = this;
-    this.app.service('subscription-invitation').find({query : { 'toEmail': data.toEmail, 'subscriptionId': data.subscriptionId, 'isDeleted': false }, headers: { 'Authorization': params.headers.authorization }})
+    return this.app.service('subscription-invitation').find({query : { 'toEmail': data.toEmail, 'subscriptionId': data.subscriptionId, 'isDeleted': false }, headers: { 'Authorization': params.headers.authorization }})
       .then(function (response) {
         if (response.data.length == 0) {
-          self.app.service('subscription-invitation').create(data).then(function (response){
+          return self.app.service('subscription-invitation').create(data).then(function (response){
           }).catch(function(err){
-            return err;
+            throw(err);
           });
         } else {
           response.data[0].isDeleted = true;
-          self.app.service('subscription-invitation').patch(response.data[0].id, response.data[0] , '').then(function (response2) {
+          return self.app.service('subscription-invitation').patch(response.data[0].id, response.data[0] , '').then(function (response2) {
             // console.log('response2-----' ,response2);
             self.app.service('subscription-invitation').create(data).then(function (response) {
             }).catch(function (err) {
-              return err;
+              throw(err);
             });
           }).catch(function (err) {
-            return err;
+            throw(err);
           });
         }
       }).catch(function (err) {
-        return err;
+        throw(err);
       });
   }
 	
