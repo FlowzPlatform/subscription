@@ -1,11 +1,13 @@
-
-let axios = require("axios")
+let axios = require('axios');
 let errors = require('@feathersjs/errors');
+const async = require('asyncawait/async');
+// const await = require('asyncawait/await'); 
+
 module.exports = {
   before: {
     all: [],
     find: [
-      hook => before_find (hook)
+      hook => before_find(hook)
     ],
     get: [],
     create: [
@@ -47,51 +49,40 @@ function before_create(hook) {
   hook.data.isDeleted = false;
 }
 
-
-async function before_find(hook) {
-  let res = await validateUser(hook);
-  console.log(res)
-  if (res.code == 401) {
-    throw new errors.NotAuthenticated('Invalid token');
-  } else {
-    if(hook.params.query.own == 'false'){
-      delete hook.params.query.own
-      hook.params.query.toEmail = res.data.data.email;
-    }
-    
+let before_find = async((hook) => {
+  return validateUser(hook).then(result => {
+    if(hook.params.query.own == 'false') {
+      delete hook.params.query.own;
+      hook.params.query.toEmail = result.data.data.email;
+    } 
     if (!hook.params.query.isDeleted) {
       hook.params.query.isDeleted = false;
     } else {
       if (hook.params.query.isDeleted == 'true') {
-        hook.params.query.isDeleted = true
+        hook.params.query.isDeleted = true;
       }
       if (hook.params.query.isDeleted == 'false') {
-        hook.params.query.isDeleted = false
+        hook.params.query.isDeleted = false;
       }
     }
-  } 
-  
-}
+    return hook;
+  }).catch(error=> { // eslint-disable-line no-unused-vars
+    throw new errors.NotAuthenticated('Invalid token');
+  });
+});
 
-async function validateUser(data) {
-  console.log(apiHeaders.authorization)
-  
-  return new Promise((resolve, reject) => {
-    axios.get("http://api." + process.env.domainKey +'/auth/api/userdetails', {
-      strictSSL: false,
-      headers: {
-        "Authorization": apiHeaders.authorization
-      }
-    })
-      .then(function (response) {
-        // console.log(response)
-        resolve(response)
-      })
-      .catch(function (error) {
-        resolve({ "code": 401 })
-      });
-  })
-}
+let validateUser = (data) => { // eslint-disable-line no-unused-vars
+  return axios.get('http://api.' + process.env.domainKey +'/auth/api/userdetails', {
+    strictSSL: false,
+    headers: {
+      'Authorization': apiHeaders.authorization // eslint-disable-line no-undef
+    }
+  }).then(function (response) {
+    return response;
+  }).catch(function (error) { // eslint-disable-line no-unused-vars
+    throw(error);
+  });
+};
 
 
 function before_patch(hook) {
@@ -99,5 +90,5 @@ function before_patch(hook) {
 }
 
 function after_find(hook) {
-  console.log(hook.params) 
+  console.log(hook.params); // eslint-disable-line no-console
 }
