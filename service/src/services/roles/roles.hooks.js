@@ -40,7 +40,7 @@ module.exports = {
 
 let find2 = (hook) => {
   if (hook.params.query.module === undefined) {
-    hook.params.query.module = {$in: ['uploader', 'webbuilder', 'crm', 'subscription','vshopdata', 'vmail', 'dbetl', 'mom']};
+    hook.params.query.module = {$in: ['uploader', 'webbuilder', 'crm', 'subscription','vshopdata', 'vmail', 'dbetl', 'mom', 'workflow']};
   }
   hook.params.paginate = {default: 1000, max: 1000};
 };
