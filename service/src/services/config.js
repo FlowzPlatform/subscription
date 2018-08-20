@@ -12,6 +12,8 @@ let rdb = process.env.rdb ? process.env.rdb : config.rethinkdb.db;
 var rethinkdb = {
   rethinkdb: {
     db: rdb,
+    buffer: 20,
+    timeoutGb: 60000,
     servers: [{
       host: rhost,
       port: rport,
