@@ -1,8 +1,4 @@
 const config = require('../config.js');
-let async = require('asyncawait/async');
-let await = require('asyncawait/await');
-const feathersErrors = require('feathers-errors');
-const errors = feathersErrors.errors;
 
 /* eslint-disable no-unused-vars */
 class Service {

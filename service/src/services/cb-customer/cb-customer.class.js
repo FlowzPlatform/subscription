@@ -40,7 +40,12 @@ class Service {
   }
 
   patch (id, data, params) {
-    return Promise.resolve(data);
+    let result = updateCustomerCard(id, data);
+    return Promise.resolve(result).then(res => {
+      return res;
+    }).catch(err => {
+      return err;
+    });
   }
 
   remove (id, params) {
@@ -50,8 +55,18 @@ class Service {
 
 let getCustomerList = function (params) {
   let limit = params.query.limit || 10;
+  let email = params.query.email;
+  let first_name = params.query.first_name;
+  let last_name = params.query.last_name;
 
-  return config.chargebee.customer.list({ limit: limit }).request((error, result) => {
+  let req_obj = { 
+    limit : limit 
+  };
+  req_obj['email[is]'] = email;
+  req_obj['first_name[starts_with]'] = first_name;
+  req_obj['last_name[starts_with]'] = last_name;
+  
+  return config.chargebee.customer.list(req_obj).request((error, result) => {
     if (error) {
       return error;
     } else {
@@ -73,6 +88,17 @@ let retrieveCustomer = function (id, params) {
 let createCustomer = function (data, params) {
   return config.chargebee.customer.create(data).request((error,result) => {
     if (error) {
+      return error;
+    } else {
+      return result;
+    }
+  });
+};
+
+let updateCustomerCard = function (id, data) {
+  return config.chargebee.card.update_card_for_customer(id, data).request((error, result) => {
+    if (error) {
+      //handle error
       return error;
     } else {
       return result;

@@ -1,8 +1,4 @@
 const config = require('../config.js');
-let async = require('asyncawait/async');
-let await = require('asyncawait/await');
-const feathersErrors = require('feathers-errors');
-const errors = feathersErrors.errors;
 
 /* eslint-disable no-unused-vars */
 class Service {
@@ -26,7 +22,6 @@ class Service {
 
   get (id, params) {
     let result =  retrievePlan(id, params);
-
     return Promise.resolve(result).then(res => {
       return res.plan;
     }).catch(err => {
@@ -36,7 +31,6 @@ class Service {
 
   create (data, params) {
     let result = createPlan(data, params);
-  
     return Promise.resolve(result).then(res => {
       return res.plan;
     }).catch(err => {
@@ -77,7 +71,14 @@ class Service {
 
 let getPlanList = function (params) {
   let limit = params.query.limit || 10;
-  return config.chargebee.plan.list({ limit: limit }).request((error, result) => {
+  let name = params.query.name;
+  let status = params.query.status;
+  let req_obj = { 
+    limit : limit 
+  };
+  req_obj['name[starts_with]'] = name;
+  req_obj['status[is]'] = status;
+  return config.chargebee.plan.list(req_obj).request((error, result) => {
     if (error) {
       return error;
     } else {

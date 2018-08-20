@@ -36,16 +36,16 @@ module.exports = {
     patch: [],
     remove: []
   }
-}
+};
 
-var find2 = async (hook) => {
+let find2 = (hook) => {
   if (hook.params.query.module === undefined) {
-    hook.params.query.module = {$in: ['uploader', 'webbuilder', 'crm', 'subscription','vshopdata', 'vmail', 'dbetl', 'mom']}
+    hook.params.query.module = {$in: ['uploader', 'webbuilder', 'crm', 'subscription','vshopdata', 'vmail', 'dbetl', 'mom', 'workflow']};
   }
-  hook.params.paginate = {default: 1000, max: 1000}
-}
+  hook.params.paginate = {default: 1000, max: 1000};
+};
 
-var modify = (hook) => {
-  hook.result = 'unable to modify data'
-  return hook
-}
+let modify = (hook) => {
+  hook.result = 'unable to modify data';
+  return hook;
+};
