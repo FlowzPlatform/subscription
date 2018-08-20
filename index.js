@@ -7,10 +7,10 @@ if (process.env['domainKey'] !== undefined && process.env['domainKey'] !== '') {
 
 const timeouts = {
   'checkResourcePermission': 0,
-  'getUserPackage': 60,
+  'getUserPackage': 0,
   'getRegisterRole': 86400,
   'getRegisterResource': 86400,
-  'getUserSubscription': 86400,
+  'getUserSubscription': 0,
   'getSiteInfo': 7200
 }
 
@@ -270,10 +270,16 @@ let commonActionValidation = async (context) => {
       // return context
     }
 
+    let moduleId = false
+    if(context.params.headers.workflowid) {
+      moduleId = context.params.headers.workflowid
+    }
+
     let moduleName = context.params.moduleName
-    let userRole = subscription.getUserRole(context, subscriptionId)
+    let userRole = subscription.getUserRole(context, subscriptionId, moduleId)
+
     console.log('=============userRole=', userRole)
-    if (userRole !== 'superadmin' && await subscription.isUserHasActionPermission(context, userRole, isSite) === false) {
+    if (userRole !== 'superadmin' && await subscription.isUserHasActionPermission(context, userRole, isSite, moduleId) === false) {
       context.result = {status: 403, message: 'Access denied for action'}
       throw new errors.Forbidden('Permission not available for action', {errorCode: 'ERR-PERMISSION'})
       // return context
@@ -350,13 +356,16 @@ let isPlanExpired = (expiryDate) => {
 }
 module.exports.isPlanExpired = isPlanExpired
 
-let getUserRole = (context, subscriptionId) => {
+let getUserRole = (context, subscriptionId, moduleId) => {
   const AnonymousRole = 'anonymous'
   const LoggedInUserRole = 'registered'
   const AdminRole = 'admin'
   const SuperAdminRole = 'superadmin'
   try {
     let moduleName = context.params.moduleName
+    if(moduleId !== false) {
+      moduleName = moduleId
+    }
     if (context.params.userPackageDetails) {
       if (context.params.userPackageDetails.package &&
       context.params.userPackageDetails.package[subscriptionId]) {
@@ -379,7 +388,7 @@ let getUserRole = (context, subscriptionId) => {
 }
 module.exports.getUserRole = getUserRole
 
-let isUserHasActionPermission = async (context, userRole, siteId) => {
+let isUserHasActionPermission = async (context, userRole, siteId, moduleId) => {
   try {
     let serviceName = context.path
     let resourceIds = context.params.resourceIds
@@ -387,6 +396,7 @@ let isUserHasActionPermission = async (context, userRole, siteId) => {
     let roleId = registerdRoleIds[userRole] ? registerdRoleIds[userRole] : 'anonymous'
     userRole = userRole.toLowerCase()
     let resourceId = resourceIds[serviceName]
+    let contextMethod = context.method
     if (siteId !== false) {
       let modulename = 'website_' + siteId
       let moduleresourceId = await getRegisterResource(modulename, serviceName, '')
@@ -394,7 +404,20 @@ let isUserHasActionPermission = async (context, userRole, siteId) => {
       let moduleRoleId = await getRegisterRole(modulename, userRole, '')
       roleId = moduleRoleId['data'] && moduleRoleId['data'][0] ? moduleRoleId['data'][0].id : 'anonymous'
     }
-    let resourcePermission = await checkResourcePermission(resourceId + '_' + context.method, 'global', roleId, siteId)
+    if (moduleId !== false) {
+      let modulename = moduleId
+      let serviceName = context.params.headers.stateid
+      let moduleresourceId = await getRegisterResource(modulename, serviceName, '')
+      resourceId = moduleresourceId['data'] && moduleresourceId['data'][0] ? moduleresourceId['data'][0].id : resourceId
+      let moduleRoleId = await getRegisterRole(modulename, userRole, '')
+      roleId = moduleRoleId['data'] && moduleRoleId['data'][0] ? moduleRoleId['data'][0].id : 'anonymous'
+      if(context.method === 'get') {
+        contextMethod = 'read'
+      } else if (context.method == 'create') {
+        contextMethod = 'write'
+      }
+    }
+    let resourcePermission = await checkResourcePermission(resourceId + '_' + contextMethod, 'global', roleId, siteId, moduleId)
 
     if (resourcePermission['data'] && resourcePermission['data']['accessValue'] > 0) {
       return true
@@ -406,11 +429,14 @@ let isUserHasActionPermission = async (context, userRole, siteId) => {
 }
 module.exports.isUserHasActionPermission = isUserHasActionPermission
 
-let checkResourcePermission = async function (resourceId, tasktype, roleId, siteId) {
+let checkResourcePermission = async function (resourceId, tasktype, roleId, siteId, moduleId) {
   return new Promise(async (resolve, reject) => {
     let modulename = moduleResource.moduleName
     if (siteId !== false) {
       modulename = 'website_' + siteId
+    }
+    if (moduleId !== false) {
+      modulename = moduleId
     }
     let KeyValue = resourcePermissionURL + '/' + modulename + '/' + tasktype + '/' + roleId + '/' + resourceId
     var options = {
