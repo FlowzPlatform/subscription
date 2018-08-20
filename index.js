@@ -411,7 +411,7 @@ let isUserHasActionPermission = async (context, userRole, siteId, moduleId) => {
       resourceId = moduleresourceId['data'] && moduleresourceId['data'][0] ? moduleresourceId['data'][0].id : resourceId
       let moduleRoleId = await getRegisterRole(modulename, userRole, '')
       roleId = moduleRoleId['data'] && moduleRoleId['data'][0] ? moduleRoleId['data'][0].id : 'anonymous'
-      if(context.method === 'get') {
+      if(context.method === 'get' || context.method === 'find') {
         contextMethod = 'read'
       } else if (context.method == 'create') {
         contextMethod = 'write'
