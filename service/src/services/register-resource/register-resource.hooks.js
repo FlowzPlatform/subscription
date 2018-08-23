@@ -90,7 +90,7 @@ var modify = async(function(hook){
 
 var find2 = async(function(hook) {
   if (hook.params.query.module === undefined) {
-    hook.params.query.module = {$in: ['uploader', 'webbuilder', 'crm', 'subscription','vshopdata', 'vmail', 'dbetl', 'mom']};
+    hook.params.query.module = {$in: ['uploader', 'webbuilder', 'crm', 'subscription','vshopdata', 'vmail', 'dbetl', 'mom', 'workflow']};
   }
   hook.params.paginate = {default: 1000, max: 1000 };
   if(hook.params.query != undefined){

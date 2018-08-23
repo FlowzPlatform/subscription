@@ -200,7 +200,8 @@ let createSubscription = async(function (data, params) {
       //CREATE PACKAGEOBJ TO UPDATE IN USER-SUBSCRIPTION
       plan.price /= 100;
       result.subscription.current_term_end = moment.unix(result.subscription.current_term_end).format();
-      
+      let startedAt = moment.unix(result.subscription.started_at).format('DD-MMM-YYYY');
+
       let packageObj = {
         'details': detail,
         'expiredOn': result.subscription.current_term_end,
@@ -230,7 +231,8 @@ let createSubscription = async(function (data, params) {
         return userDetails;
       }
       //ADD SUBSCRIBED PACKAGE RECORD IN USER DETAILS API
-      let planName = userSub.id.substr(userSub.id.length - 5) + '-' +  plan.name + '-' + moment(packageObj.expiredOn).format('DD-MMM-YYYY');
+      // let planName = userSub.id.substr(userSub.id.length - 5) + '-' +  plan.name + '-' + moment(packageObj.expiredOn).format('DD-MMM-YYYY');
+      let planName = userSub.id.substr(userSub.id.length - 5) + '-' +  plan.name + '-' + startedAt;
       if (userDetails.data.package) {
         userDetails.data.package[userSub.id] = { 'subscriptionId': userSub.id, 'role': 'admin', 'name': planName };
       } else {
@@ -415,7 +417,8 @@ let subscribeForCustomer = async(function (id, data, params) {
       //CREATE PACKAGEOBJ TO UPDATE IN USER-SUBSCRIPTION
       plan.price /= 100;
       result.subscription.current_term_end = moment.unix(result.subscription.current_term_end).format();
-      
+      let startedAt = moment.unix(result.subscription.started_at).format('DD-MMM-YYYY');
+
       let packageObj = {
         'details': detail,
         'expiredOn': result.subscription.current_term_end,
@@ -445,7 +448,8 @@ let subscribeForCustomer = async(function (id, data, params) {
         return userDetails;
       }
       //ADD SUBSCRIBED PACKAGE RECORD IN USER DETAILS API
-      let planName = userSub.id.substr(userSub.id.length - 5) + '-' +  plan.name + '-' + moment(packageObj.expiredOn).format('DD-MMM-YYYY');
+      // let planName = userSub.id.substr(userSub.id.length - 5) + '-' +  plan.name + '-' + moment(packageObj.expiredOn).format('DD-MMM-YYYY');
+      let planName = userSub.id.substr(userSub.id.length - 5) + '-' +  plan.name + '-' + startedAt;
       if (userDetails.data.package) {
         userDetails.data.package[userSub.id] = { 'subscriptionId': userSub.id, 'role': 'admin', 'name': planName };
       } else {
