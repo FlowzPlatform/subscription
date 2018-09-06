@@ -26,6 +26,8 @@ const cbAddonsUser = require('./cb-addons-user/cb-addons-user.service.js');
 
 const cbChangefeeds = require('./cb-changefeeds/cb-changefeeds.service.js');
 
+const userModuleRole = require('./user-module-role/user-module-role.service.js');
+
 module.exports = function () {
   const app = this; // eslint-disable-line no-unused-vars
   app.configure(defaultSubscription);
@@ -47,4 +49,5 @@ module.exports = function () {
   app.configure(cbCustomer);
   app.configure(cbAddonsUser);
   app.configure(cbChangefeeds);
+  app.configure(userModuleRole);
 };
