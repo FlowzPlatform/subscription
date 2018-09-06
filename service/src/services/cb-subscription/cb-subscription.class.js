@@ -587,7 +587,7 @@ let updateUserSubscription = function (id, data, params) {
 let updateUserPackageDetails = function(userDetails, customer_id, defaultSubId, params) {
   return new Promise ((resolve, reject) => {
     let app = params.app;
-    app.service('user-module-role').create({'user_id': userDetails.data._id, 'sub_id': userDetails.data.package[defaultSubId].subscriptionId, 'role': userDetails.data.package[defaultSubId].role});
+    app.service('user-module-role').create({'userId': userDetails.data._id, 'subscriptionId': userDetails.data.package[defaultSubId].subscriptionId, 'role': userDetails.data.package[defaultSubId].role});
     return axios.put(config.update_user_url + customer_id, {'package':userDetails.data.package, 'defaultSubscriptionId': defaultSubId}, { headers: {'Content-Type': 'application/json', 'authorization': params.headers.authorization } }).then(res => {
       // console.log('User ',  customer_id, ' has subscribed  package successfully..!');
       resolve(res);

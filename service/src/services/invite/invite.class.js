@@ -133,7 +133,7 @@ class Service {
   updateuserdetails(userId,previous_packages,params, subscriptionId, role1){
     let module = Object.keys(role1);
     let role = Object.values(role1);
-    this.app.service('user-module-role').create({'user_id': userId, 'sub_id': subscriptionId, 'module': module[0], 'role': role[0]});
+    this.app.service('user-module-role').create({'userId': userId, 'subscriptionId': subscriptionId, 'module': module[0], 'role': role[0]});
     return axios.put(baseUrl+'/user/updateuserdetails/' + userId, { package: previous_packages }, { headers: { 'Authorization': params.headers.authorization } })
       .then(((result) => {
         return result; 
