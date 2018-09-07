@@ -1,9 +1,11 @@
 let Utils = require('./Utils.js')
 let domainKey = 'localhost'
 let protocol = 'https'
+let socketPort = 4042
 if (process.env['domainKey'] !== undefined && process.env['domainKey'] !== '') {
   domainKey = process.env['domainKey']
 }
+
 
 const timeouts = {
   'checkResourcePermission': 0,
@@ -29,6 +31,15 @@ let defaultConfig = {
   'userSiteURL': protocol + '://api.' + domainKey + '/serverapi/project-configuration',
   'resourcePermissionURL': protocol + '://api.' + domainKey + '/authldap/getpermission'
 }
+
+var socket = require('socket.io-client')(`https://api.${domainKey}:${socketPort}`);
+
+let cacheRoleResource = {};
+socket.on('connect', function(){});
+socket.on('permissionChanged', function(data){
+  let cacheKey = `${data.app}_${data.taskType}_${data.roleId}_${data.resourceId}`;
+  delete cacheRoleResource[cacheKey];
+});
 
 let subscriptionURL = defaultConfig['subscriptionURL']
 let userDetailURL = defaultConfig['userDetailURL']
@@ -423,6 +434,10 @@ module.exports.isUserHasActionPermission = isUserHasActionPermission
 
 let checkResourcePermission = async function (resourceId, tasktype, roleId, modulename) {
   return new Promise(async (resolve, reject) => {
+    let cacheKey = `${modulename}_${tasktype}_${roleId}_${resourceId}`;
+    if(cacheRoleResource[cacheKey]) {
+      resolve(cacheRoleResource[cacheKey])
+    }
     let KeyValue = resourcePermissionURL + '/' + modulename + '/' + tasktype + '/' + roleId + '/' + resourceId
     var options = {
       method: 'get',
@@ -433,7 +448,8 @@ let checkResourcePermission = async function (resourceId, tasktype, roleId, modu
     }
     // console.log("==================" + KeyValue + "==============")
     let resourcePermission = await Utils.CachedRP(options, {key: KeyValue, timeout: timeouts['checkResourcePermission']})
-    resolve(JSON.parse(resourcePermission))
+    cacheRoleResource[cacheKey] = JSON.parse(resourcePermission)
+    resolve(cacheRoleResource[cacheKey])
   })
 }
 module.exports.checkResourcePermission = checkResourcePermission
