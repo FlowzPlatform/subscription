@@ -23,7 +23,7 @@ module.exports = {
   after: {
     all: [],
     find: [
-      hook => after_find(hook)
+      /* hook => after_find(hook) */
     ],
     get: [],
     create: [],
@@ -89,6 +89,6 @@ function before_patch(hook) {
   hook.data.unassignDate = new Date(); 
 }
 
-function after_find(hook) {
+/* function after_find(hook) {
   console.log(hook.params); // eslint-disable-line no-console
-}
+} */
