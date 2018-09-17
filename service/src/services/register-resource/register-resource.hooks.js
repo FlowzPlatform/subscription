@@ -1,4 +1,4 @@
-
+/*eslint no-console: ["error", { allow: ["warn","log"] }] */
 let async = require('asyncawait/async');
 let await = require('asyncawait/await');
 
@@ -41,52 +41,53 @@ module.exports = {
   }
 };
 
-var modify = async(function(hook){
-  // console.log('***********hook',hook.data);
-  // console.log('***********hook',hook.params);
-  let obj = {};
-  let action_obj = {};
-  let id = '';
-  let module = hook.data.module.toLowerCase();
-  let service = hook.data.service.toLowerCase();
-  // console.log("++++++++++++++++++",module,service)
-  obj['module'] = module;
-  obj['service'] = service;
-  obj['actions'] = [];
-  for(let key in hook.data.actions[0]) {
-    let key1 = key.toLowerCase();
-    let action1 = hook.data.actions[0][key].toLowerCase();
-    // console.log('key1.action1',key1,action1);
-    action_obj[key1] = action1;
-  }
-  obj['actions'].push(action_obj);
 
-  // console.log('module======', module);
+var modify = async(function(hook) {
+  let obj = [];
+  let oldObj = [];
+  // let id = [];
+  // let flag = true;
+  let module = hook.data.module.toLowerCase();
+
   var tdata = await(hook.app.service('/register-resource').find({
-    'query':{'module': module}
+    query: {
+      $limit: 50,
+      module: module
+    }
   }));
 
-  // console.log('tdata', tdata);
+  let resourceData = tdata.data;
+  for(let key in hook.data.services) {
+    key = key.toLowerCase();
+    let regExpmainPlan = new RegExp('^' + key, 'i');
+    let findObj = resourceData.find((o) => { return regExpmainPlan.test(o.service); });
+    let actionKey = hook.data.services[key].map((obj) => { return {[obj]:obj};});
+    if (!findObj) {
+      obj.push({'module':module,'service':key,'actions': actionKey });
+    } else {
+      oldObj.push({'module':module,'service':key,'actions': actionKey});
+    }
+  }
 
-  if(tdata.data.length != 0){
-    for(let [i, mObj] of tdata.data.entries()) { // eslint-disable-line no-unused-vars
-      if(mObj.module == module && mObj.service == service){
-        id = mObj.id;
-        hook.app.service('/register-resource').update(id,obj).then(result => {
-          console.log('result....',result); // eslint-disable-line no-console
+  if(tdata.data.length != 0) {
+    for(let i=0;i<tdata.data.length;i++) {
+      let regExpmainPlan = new RegExp('^' + tdata.data[i].service, 'i');
+      let findObj = oldObj.find((o) => { return regExpmainPlan.test(o.service); });
+      if (!findObj) {
+        hook.app.service('/register-resource').remove(tdata.data[i].id).then(result => {
+          console.log('result....',result); //eslint-disable-line no-console
         });
-        hook.data = [];
-        hook.result = {'data':'updated','id':id};
-      }
-      else{
-        hook.data = obj;
+      } else {
+        hook.app.service('/register-resource').patch(tdata.data[i].id,findObj).then(result => {
+          console.log('result....',result); //eslint-disable-line no-console
+        });
       }
     }
   }
-  else{
-    hook.data = obj;
-  }
+  console.log('=======',obj);
+  hook.data = obj;
 });
+
 
 var find2 = async(function(hook) {
   if (hook.params.query.module === undefined) {

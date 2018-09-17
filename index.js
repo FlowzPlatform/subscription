@@ -1,13 +1,17 @@
 let Utils = require('./Utils.js')
 let domainKey = 'localhost'
 let protocol = 'https'
+let socketPort = 4042
+let userSocketPort = 4043
 if (process.env['domainKey'] !== undefined && process.env['domainKey'] !== '') {
   domainKey = process.env['domainKey']
 }
 
+
 const timeouts = {
   'checkResourcePermission': 0,
-  'getUserPackage': 0,
+  'chechUserToken': 7200,
+  'getUserPackage': 86400,
   'getRegisterRole': 86400,
   'getRegisterResource': 86400,
   'getUserSubscription': 0,
@@ -15,14 +19,16 @@ const timeouts = {
 }
 
 if (process.env['NODE_ENV'] !== 'production') {
-  protocol = 'http'
+  protocol = 'https'
 }
 // protocol = 'http'
 
 let defaultConfig = {
   'subscriptionURL': '/subscriptionlist',
+  'checkUserToken': protocol + '://api.' + domainKey + '/auth/api/validatetoken',
   'userDetailURL': protocol + '://api.' + domainKey + '/auth/api/userdetails',
   'registerModuleURL': protocol + '://api.' + domainKey + '/subscription/register-resource',
+  // 'registerModuleURL': 'http://localhost:3030/register-resource',
   'registerRoleURL': protocol + '://api.' + domainKey + '/subscription/register-roles',
   // 'registerRoleURL':   'http://localhost:3030/register-roles',
   'userSubscriptionURL': protocol + '://api.' + domainKey + '/subscription/user-subscription',
@@ -30,29 +36,32 @@ let defaultConfig = {
   'resourcePermissionURL': protocol + '://api.' + domainKey + '/authldap/getpermission'
 }
 
+var socket = require('socket.io-client')(`https://api.${domainKey}:${socketPort}`);
+
+var userSocket = require('socket.io-client')(`https://api.${domainKey}:${userSocketPort}`);
+
+let cacheRoleResource = {};
+socket.on('connect', function(){});
+socket.on('permissionChanged', function(data){
+  let cacheKey = `${data.app}_${data.taskType}_${data.roleId}_${data.resourceId}`;
+  delete cacheRoleResource[cacheKey];
+});
+
+let cacheUser = {};
+userSocket.on('connect', function(){});
+userSocket.on('updateduserdetails', function(data) {
+  let cacheKey = `${data._id}`;
+  delete cacheUser[cacheKey];
+});
+
 let subscriptionURL = defaultConfig['subscriptionURL']
 let userDetailURL = defaultConfig['userDetailURL']
+let checkUserToken = defaultConfig['checkUserToken']
 let registerModuleURL = defaultConfig['registerModuleURL']
 let registerRoleURL = defaultConfig['registerRoleURL']
 let userSubscription = defaultConfig['userSubscriptionURL']
 let userSiteURL = defaultConfig['userSiteURL']
 let resourcePermissionURL = defaultConfig['resourcePermissionURL']
-
-// if (process.env['subscriptionURL'] !== undefined && process.env['subscriptionURL'] !== '') {
-//   subscriptionURL = process.env['subscriptionURL']
-// }
-// if (process.env['userDetailURL'] !== undefined && process.env['userDetailURL'] !== '') {
-//   userDetailURL = process.env['userDetailURL']
-// }
-// if (process.env['registerModuleURL'] !== undefined && process.env['registerModuleURL'] !== '') {
-//   registerModuleURL = process.env['registerModuleURL']
-// }
-// if (process.env['registerRoleURL'] !== undefined && process.env['registerRoleURL'] !== '') {
-//   registerRoleURL = process.env['registerRoleURL']
-// }
-// if (process.env['userSubscription'] !== undefined && process.env['userSubscription'] !== '') {
-//   userSubscription = process.env['userSubscription']
-// }
 
 let userArr = []
 // console.log(userArr)
@@ -91,16 +100,45 @@ let isValidAuthToken = async (authToken) => {
 
 let getUserPackage = async function (authorization) {
   return new Promise(async (resolve, reject) => {
-    let KeyValue = userDetailURL + authorization
+    let KeyValue = checkUserToken + authorization
     var options = {
-      uri: userDetailURL,
+      uri: checkUserToken,
+      method: 'post',
       headers: {
         'authorization': authorization
       }
     }
-    let userDetail = await Utils.CachedRP(options, {key: KeyValue, timeout: timeouts['getUserPackage']})
-    // console.log(userDetail)
-    resolve(JSON.parse(userDetail))
+    let userTokenDetail = await Utils.CachedRP(options, {key: KeyValue, timeout: timeouts['chechUserToken']})
+    if(!userTokenDetail) {
+      resolve(null)
+      return
+    }
+    userTokenDetail = JSON.parse(userTokenDetail)
+    let userDetails = getUserDetails(authorization, userTokenDetail.id)
+    resolve(userDetails)
+  })
+}
+
+let getUserDetails = async function (authorization, userId) {
+  return new Promise(async (resolve, reject) => {
+    let cacheKey = `${userId}`;
+    if(cacheUser[cacheKey]) {
+      resolve(cacheUser[cacheKey])
+    } else {
+      let KeyValue = userDetailURL + authorization
+      var options = {
+        uri: userDetailURL,
+        headers: {
+          'authorization': authorization
+        }
+      }
+      let userDetail = await Utils.CachedRP(options, {key: KeyValue, timeout: timeouts['userDetailURL']})
+      if(!userDetail) {
+        resolve(null)
+      }
+      cacheUser[cacheKey] = JSON.parse(userDetail)
+      resolve(cacheUser[cacheKey])
+    }
   })
 }
 
@@ -115,18 +153,15 @@ async function registeredAppModulesRole (isWebSite = false) {
     console.log('Please register your modules in "registerAppModule"')
     if (isWebSite) process.exit()
   }
-  for (let resourceName in this.moduleResource.registerAppModule) {
-    let newActionValue = {}
-    let actionValue = this.moduleResource.registerAppModule[resourceName]
-    for (let actionKey in actionValue) {
-      if (typeof parseInt(actionKey) === 'number') {
-        newActionValue[actionValue[actionKey]] = actionValue[actionKey]
-      } else {
-        newActionValue[actionKey] = actionValue[actionKey]
-      }
-    }
-    let resourceData = await registerToMainService(this.moduleResource.moduleName, resourceName, newActionValue)
-    this.moduleResource.registerdIds[resourceName] = resourceData.id
+  await registerToMainService(this.moduleResource.moduleName, this.moduleResource.registerAppModule)
+  let resourceData = await getAllRegisterResource(this.moduleResource.moduleName)
+  if (resourceData.data.length === 0) {
+    console.log('Please register your modules in "registerAppModule"')
+    if (isWebSite) process.exit()
+  }
+  resourceData = resourceData.data
+  for (let resourceName in resourceData) {
+    this.moduleResource.registerdIds[resourceData[resourceName]['service']] = resourceData[resourceName]['id']
   }
 
   if (this.moduleResource.appRoles === undefined || this.moduleResource.appRoles.length === 0) {
@@ -143,16 +178,15 @@ async function registeredAppModulesRole (isWebSite = false) {
 }
 module.exports.registeredAppModulesRole = registeredAppModulesRole
 
-async function registerToMainService (modulename, resource, actions, authorization) {
+async function registerToMainService (modulename, resource) {
   return new Promise(async (resolve, reject) => {
-    let KeyValue = registerModuleURL + modulename + resource + actions + authorization
+    let KeyValue = registerModuleURL + modulename + resource
     var options = {
       method: 'post',
       uri: registerModuleURL,
       body: {
         'module': modulename,
-        'service': resource,
-        'actions': [actions]
+        'services': resource
       },
       json: true
       // headers: {
@@ -195,6 +229,21 @@ async function getRegisterResource (modulename, resource, authorization) {
       // }
     }
     let resourceRole = await Utils.CachedRP(options, {key: KeyValue, timeout: timeouts['getRegisterResource']})
+    resolve(JSON.parse(resourceRole))
+  })
+}
+
+async function getAllRegisterResource (modulename, authorization) {
+  return new Promise(async (resolve, reject) => {
+    let KeyValue = registerModuleURL + '?module=' + modulename
+    var options = {
+      method: 'get',
+      uri: registerModuleURL + '?module=' + modulename
+      // headers: {
+      //   'authorization': authorization
+      // }
+    }
+    let resourceRole = await Utils.CachedRP(options, {key: KeyValue, timeout: 0})
     resolve(JSON.parse(resourceRole))
   })
 }
@@ -390,6 +439,9 @@ module.exports.getUserRole = getUserRole
 
 let isUserHasActionPermission = async (context, userRole, siteId, moduleId) => {
   try {
+
+    let modulename = moduleResource.moduleName
+
     let serviceName = context.path
     let resourceIds = context.params.resourceIds
     let registerdRoleIds = context.params.registerdRoleIds
@@ -397,15 +449,8 @@ let isUserHasActionPermission = async (context, userRole, siteId, moduleId) => {
     userRole = userRole.toLowerCase()
     let resourceId = resourceIds[serviceName]
     let contextMethod = context.method
-    if (siteId !== false) {
-      let modulename = 'website_' + siteId
-      let moduleresourceId = await getRegisterResource(modulename, serviceName, '')
-      resourceId = moduleresourceId['data'] && moduleresourceId['data'][0] ? moduleresourceId['data'][0].id : resourceId
-      let moduleRoleId = await getRegisterRole(modulename, userRole, '')
-      roleId = moduleRoleId['data'] && moduleRoleId['data'][0] ? moduleRoleId['data'][0].id : 'anonymous'
-    }
     if (moduleId !== false) {
-      let modulename = moduleId
+      modulename = moduleId
       let serviceName = context.params.headers.stateid
       let moduleresourceId = await getRegisterResource(modulename, serviceName, '')
       resourceId = moduleresourceId['data'] && moduleresourceId['data'][0] ? moduleresourceId['data'][0].id : resourceId
@@ -417,26 +462,19 @@ let isUserHasActionPermission = async (context, userRole, siteId, moduleId) => {
         contextMethod = 'write'
       }
     }
-    let resourcePermission = await checkResourcePermission(resourceId + '_' + contextMethod, 'global', roleId, siteId, moduleId)
-
-    if (resourcePermission['data'] && resourcePermission['data']['accessValue'] > 0) {
-      return true
-    }
-    return false
+    let resourcePermission = await checkResourcePermission(resourceId + '_' + contextMethod, 'global', roleId, modulename)
+    return (resourcePermission['data'] && resourcePermission['data']['accessValue'] > 0)
   } catch (e) {
     return false
   }
 }
 module.exports.isUserHasActionPermission = isUserHasActionPermission
 
-let checkResourcePermission = async function (resourceId, tasktype, roleId, siteId, moduleId) {
+let checkResourcePermission = async function (resourceId, tasktype, roleId, modulename) {
   return new Promise(async (resolve, reject) => {
-    let modulename = moduleResource.moduleName
-    if (siteId !== false) {
-      modulename = 'website_' + siteId
-    }
-    if (moduleId !== false) {
-      modulename = moduleId
+    let cacheKey = `${modulename}_${tasktype}_${roleId}_${resourceId}`;
+    if(cacheRoleResource[cacheKey]) {
+      resolve(cacheRoleResource[cacheKey])
     }
     let KeyValue = resourcePermissionURL + '/' + modulename + '/' + tasktype + '/' + roleId + '/' + resourceId
     var options = {
@@ -448,7 +486,8 @@ let checkResourcePermission = async function (resourceId, tasktype, roleId, site
     }
     // console.log("==================" + KeyValue + "==============")
     let resourcePermission = await Utils.CachedRP(options, {key: KeyValue, timeout: timeouts['checkResourcePermission']})
-    resolve(JSON.parse(resourcePermission))
+    cacheRoleResource[cacheKey] = JSON.parse(resourcePermission)
+    resolve(cacheRoleResource[cacheKey])
   })
 }
 module.exports.checkResourcePermission = checkResourcePermission
