@@ -103,7 +103,7 @@ class Service {
           };
           resolve (errorObj);
         }
-        return self.updateuserdetails(userId,previous_packages,params).then(r => {
+        return self.updateuserdetails(userId,previous_packages,params,subscriptionId,Role1).then(r => {
           return {res:res,userDetail:r};
         });
       }).then(async ((result)=>{
@@ -130,10 +130,14 @@ class Service {
     });
   }
 	
-  updateuserdetails(userId,previous_packages,params){
+  updateuserdetails(userId,previous_packages,params, subscriptionId, role1){
+    let self = this;
+    let module = Object.keys(role1);
+    let role = Object.values(role1);
     return axios.put(baseUrl+'/user/updateuserdetails/' + userId, { package: previous_packages }, { headers: { 'Authorization': params.headers.authorization } })
       .then(((result) => {
-        return result; 
+        self.app.service('user-module-role').create({'userId': userId, 'subscriptionId': subscriptionId, 'module': module[0], 'role': role[0]});
+        return result;
       })).catch((err) => {
         let errorObj = {};
         errorObj.statusText = err.response.statusText;
@@ -255,6 +259,7 @@ class Service {
         axios.put(baseUrl + '/user/updateuserdetails/' + userId, { package: previous_packages }, { headers: { 'Authorization': params.headers.authorization }}).then(async ((result) => {
           let subscription_invite = await (self.subscription_invitation_remove(params, res));
           self.sendDeclineEmail(params, res, params.headers.authorization);
+          self.app.service('user-module-role').remove(null,{query: {userId: userId, subscriptionId: subscriptionId}});
           resolve(result.data);
         })).catch(function (err) {
           let errorObj = {};
