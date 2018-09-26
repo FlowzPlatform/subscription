@@ -1,6 +1,4 @@
-
-const _ = require('lodash');
-var r = require('rethinkdbdash');
+/*eslint no-console: ["error", { allow: ["warn","log"] }] */
 let async = require('asyncawait/async');
 let await = require('asyncawait/await');
 
@@ -9,7 +7,7 @@ module.exports = {
     all: [
     ],
     find: [
-        hook => find2(hook)
+      hook => find2(hook)
     ],
     get: [
     ],
@@ -43,80 +41,86 @@ module.exports = {
   }
 };
 
-var modify = async(function(hook){
-  // console.log("***********hook",hook.data)
-  // console.log("***********hook",hook.params)
-  let obj = {}
-  let action_obj = {}
-  let id = ''
-  let module = hook.data.module.toLowerCase()
-  let service = hook.data.service.toLowerCase()
-  // console.log("++++++++++++++++++",module,service)
-  obj["module"] = module
-  obj["service"] = service
-  obj["actions"] = []
-  for(let key in hook.data.actions[0]) {
-    let key1 = key.toLowerCase()
-    let action1 = hook.data.actions[0][key].toLowerCase()
-    console.log("key1.action1",key1,action1)
-    action_obj[key1] = action1
-  }
-  obj["actions"].push(action_obj)
 
-  var tdata = await(hook.app.service('/register-resource').find())
+var modify = async(function(hook) {
+  let obj = [];
+  let oldObj = [];
+  // let id = [];
+  // let flag = true;
+  let module = hook.data.module.toLowerCase();
 
-  console.log('tdata', tdata)
-
-  if(tdata.data.length != 0){
-  for(let [i, mObj] of tdata.data.entries()) {
-    if(mObj.module == module && mObj.service == service){
-         id = mObj.id
-         hook.app.service('/register-resource').update(id,obj).then(result => {
-            //  console.log("result....",result)
-         });
-         hook.data = []
-         hook.result = {"data":"updated"}
+  var tdata = await(hook.app.service('/register-resource').find({
+    query: {
+      $limit: 50,
+      module: module
     }
-    else{
-       hook.data = obj
+  }));
+
+  let resourceData = tdata.data;
+  for(let key in hook.data.services) {
+    key = key.toLowerCase();
+    let regExpmainPlan = new RegExp('^' + key, 'i');
+    let findObj = resourceData.find((o) => { return regExpmainPlan.test(o.service); });
+    let actionKey = hook.data.services[key].map((obj) => { return {[obj]:obj};});
+    if (!findObj) {
+      obj.push({'module':module,'service':key,'actions': actionKey });
+    } else {
+      oldObj.push({'module':module,'service':key,'actions': actionKey});
     }
   }
- }
- else{
-    hook.data = obj
- }
-})
 
-var find2 = async(function(hook){
+  if(tdata.data.length != 0) {
+    for(let i=0;i<tdata.data.length;i++) {
+      let regExpmainPlan = new RegExp('^' + tdata.data[i].service, 'i');
+      let findObj = oldObj.find((o) => { return regExpmainPlan.test(o.service); });
+      if (!findObj) {
+        hook.app.service('/register-resource').remove(tdata.data[i].id).then(result => {
+          console.log('result....',result); //eslint-disable-line no-console
+        });
+      } else {
+        hook.app.service('/register-resource').patch(tdata.data[i].id,findObj).then(result => {
+          console.log('result....',result); //eslint-disable-line no-console
+        });
+      }
+    }
+  }
+  console.log('=======',obj);
+  hook.data = obj;
+});
+
+
+var find2 = async(function(hook) {
+  if (hook.params.query.module === undefined) {
+    hook.params.query.module = {$in: ['uploader', 'webbuilder', 'crm', 'subscription','vshopdata', 'vmail', 'dbetl', 'mom', 'workflow']};
+  }
+  hook.params.paginate = {default: 1000, max: 1000 };
   if(hook.params.query != undefined){
     // console.log("called....")
-  if(hook.params.query.method  && hook.params.query.route && hook.params.query.module){
-    let p_module1 = hook.params.query.module.toLowerCase()
-    let p_method1 = hook.params.query.method.toLowerCase()
-    let p_route1 = hook.params.query.route.toLowerCase()
+    if(hook.params.query.method  && hook.params.query.route && hook.params.query.module){
+      let p_module1 = hook.params.query.module.toLowerCase();
+      let p_method1 = hook.params.query.method.toLowerCase();
+      let p_route1 = hook.params.query.route.toLowerCase();
       // console.log("&&&&&&&&&&&&&&&",hook.params.query)
-      var tdata1 = await(hook.app.service('/register-resource').find())
+      var tdata1 = await(hook.app.service('/register-resource').find());
       // console.log('tdata', tdata1)
       if(tdata1.data.length != 0){
-        for(let [i, mObj] of tdata1.data.entries()) {
-            // console.log("mObj.actions",mObj.actions)
-            if(mObj.module == p_module1){
-              for(let key in mObj.actions[0])
-                {
-                  // console.log(key,mObj.actions[0][key])
-                  if(p_method1 == key && p_route1 == mObj.actions[0][key]){
-                    hook.result = mObj
-                  }
-                }
+        for(let [i, mObj] of tdata1.data.entries()) { // eslint-disable-line no-unused-vars
+          // console.log("mObj.actions",mObj.actions)
+          if(mObj.module == p_module1){
+            for(let key in mObj.actions[0])
+            {
+              // console.log(key,mObj.actions[0][key])
+              if(p_method1 == key && p_route1 == mObj.actions[0][key]){
+                hook.result = mObj;
+              }
             }
+          }
         }
 
       }
+    }
   }
-}
-
-
-})
+});
 
 
 

@@ -19,5 +19,6 @@
   "x_api_token":"xxxxxxx",
   "pay_url":"xxxxxxx",
   "update_user_url" : "xxxxxx",
-  "user_detail_url" : "xxxxxx"
+  "user_detail_url" : "xxxxxx",
+  "api_url": "xxxxxxxx"
 }
