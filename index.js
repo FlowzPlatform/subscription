@@ -14,7 +14,7 @@ const timeouts = {
   'getUserPackage': 86400,
   'getRegisterRole': 86400,
   'getRegisterResource': 86400,
-  'getUserSubscription': 0,
+  'getUserSubscription': 7200,
   'getSiteInfo': 7200
 }
 
@@ -319,6 +319,13 @@ let commonActionValidation = async (context) => {
       // return context
     }
 
+    if(context.method !== 'remove') {
+      context.data['subscriptionOwnerId'] = userSubscriptionDetails.userId;
+      context.data['subscriptionId'] = subscriptionId;
+      context.data['userId'] = context.params.userPackageDetails._id;
+    }
+
+
     let moduleId = false
     if(context.params.headers.workflowid) {
       moduleId = context.params.headers.workflowid
@@ -458,7 +465,7 @@ let isUserHasActionPermission = async (context, userRole, siteId, moduleId) => {
       roleId = moduleRoleId['data'] && moduleRoleId['data'][0] ? moduleRoleId['data'][0].id : 'anonymous'
       if(context.method === 'get' || context.method === 'find') {
         contextMethod = 'read'
-      } else if (context.method == 'create') {
+      } else if (context.method == 'create' || context.method == 'patch' || context.method == 'update') {
         contextMethod = 'write'
       }
     }
