@@ -201,7 +201,7 @@ let createSubscription = async(function (data, params) {
       plan.price /= 100;
       result.subscription.current_term_end = moment.unix(result.subscription.current_term_end).format();
       let startedAt = moment.unix(result.subscription.started_at).format('DD-MMM-YYYY');
-
+      let trans_id = result.invoice && result.invoice.linked_payments ? result.invoice.linked_payments : null;
       let packageObj = {
         'details': detail,
         'expiredOn': result.subscription.current_term_end,
@@ -210,7 +210,7 @@ let createSubscription = async(function (data, params) {
         'sub_id': result.subscription.id,
         'plan_id': result.subscription.plan_id,
         'time_unit': result.subscription.billing_period_unit,
-        'trans_id': result.invoice.linked_payments,
+        'trans_id': trans_id,
         'userId': result.subscription.customer_id,
         'validity': result.subscription.billing_period
       };
@@ -418,7 +418,7 @@ let subscribeForCustomer = async(function (id, data, params) {
       plan.price /= 100;
       result.subscription.current_term_end = moment.unix(result.subscription.current_term_end).format();
       let startedAt = moment.unix(result.subscription.started_at).format('DD-MMM-YYYY');
-
+      let trans_id = result.invoice && result.invoice.linked_payments ? result.invoice.linked_payments : null;
       let packageObj = {
         'details': detail,
         'expiredOn': result.subscription.current_term_end,
@@ -427,7 +427,7 @@ let subscribeForCustomer = async(function (id, data, params) {
         'sub_id': result.subscription.id,
         'plan_id': result.subscription.plan_id,
         'time_unit': result.subscription.billing_period_unit,
-        'trans_id': result.invoice.linked_payments,
+        'trans_id': trans_id,
         'userId': result.subscription.customer_id,
         'validity': result.subscription.billing_period
       };
